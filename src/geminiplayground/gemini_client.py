@@ -15,6 +15,7 @@ from rich.console import Console
 from rich.table import Table
 from tqdm import tqdm
 
+from geminiplayground.multi_modal_part import MultimodalPart
 from geminiplayground.singleton import Singleton
 from geminiplayground.utils import UploadFile
 
@@ -443,14 +444,13 @@ class GeminiClient(metaclass=Singleton):
         :param prompt_request: The prompt
         :return:
         """
-        from geminiplayground import VideoFile, ImageFile
 
         if isinstance(prompt_request, list):
             parts = []
             for part in prompt_request:
                 if isinstance(part, str):
-                    parts.append(TextPart(text=part))
-                elif isinstance(part, (VideoFile, ImageFile)):
+                    parts.append(TextPart(text="\n" + part + "\n"))
+                elif isinstance(part, MultimodalPart):
                     parts.extend(part.content_parts())
             prompt_request = GenerateRequest(contents=[GenerateRequestParts(parts=parts)])
             if generation_config:

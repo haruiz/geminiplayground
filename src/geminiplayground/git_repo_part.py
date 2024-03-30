@@ -71,7 +71,7 @@ class GitRemoteProgress(git.RemoteProgress):
         self.alive_bar_instance.__exit__(None, None, None)
 
 
-def check_if_folder_contains_repo(path):
+def folder_contains_git_repo(path):
     """
     Check if a given folder is a git repository
     :param path:
@@ -101,16 +101,30 @@ def get_repo_name_from_url(url: str) -> str:
 class GitRepo(MultimodalPart):
     def __init__(self, repo_folder: typing.Union[str, Path], **kwargs):
         # set the output directory for the repos
+        try:
+            repo_folder = Path(repo_folder).resolve(strict=True)
+            logger.info(f"Checking if {repo_folder} is a git repository")
 
-        repo_folder = Path(repo_folder).resolve().absolute()
-        print(repo_folder)
+            assert repo_folder.exists(), f"{repo_folder} does not exist"
+            assert folder_contains_git_repo(repo_folder), f"{repo_folder} is not a git repository"
 
-        assert repo_folder.exists(), f"{repo_folder} does not exist"
-        assert check_if_folder_contains_repo(repo_folder), f"{repo_folder} is not a git repository"
+            self.repo_folder = repo_folder
+            self.repo = git.Repo(repo_folder)
+            self.gemini_client = kwargs.get("gemini_client", GeminiClient())
 
-        self.repo_folder = repo_folder
-        self.repo = git.Repo(repo_folder)
-        self.gemini_client = kwargs.get("gemini_client", GeminiClient())
+            self.config = kwargs.setdefault("config", {"content": "code-files"})
+            self.content = self.config.get("content", "code-files")
+
+            logger.info(f"Repo folder: {self.repo_folder}")
+            logger.info(f"Content: {self.content}")
+            logger.info(f"Config: {self.config}")
+
+            valid_contents = {"code-files", "issues"}
+            if self.content not in valid_contents:
+                raise ValueError(f"Invalid content {self.content}, should be code-files or issues")
+        except Exception as e:
+            logger.error(e)
+            raise e
 
     @classmethod
     def from_folder(cls, folder: str, **kwargs):
@@ -142,21 +156,29 @@ class GitRepo(MultimodalPart):
         repo_folder = repos_folder.joinpath(repo_name)
         repo_folder.mkdir(parents=True, exist_ok=True)
 
-        if not repo_folder.exists():
-            git.Repo.clone_from(
-                url=repo_url,
-                to_path=repo_folder,
-                branch=branch,
-                progress=GitRemoteProgress(),
-            )
-        return GitRepo(repo_folder, **kwargs)
+        folder_is_empty = not any(repo_folder.iterdir())
+        if folder_is_empty:
+            try:
+                git.Repo.clone_from(
+                    url=repo_url,
+                    to_path=repo_folder,
+                    branch=branch,
+                    progress=GitRemoteProgress(),
+                )
+            except Exception as e:
+                logger.error(e)
+                raise e
+        return cls(repo_folder, **kwargs)
 
-    def __get_parts_from_code_files(self, **kwargs):
+    def __get_parts_from_code_files(self):
         """
         Get the code parts from the repo
         :return:
         """
-        code_files = get_code_files_in_dir(self.repo_folder, **kwargs)
+        file_extensions = self.config.get("file_extensions", None)
+        exclude_dirs = self.config.get("exclude_dirs", None)
+
+        code_files = get_code_files_in_dir(self.repo_folder, file_extensions, exclude_dirs)
         code_files = sorted(code_files, key=lambda x: x.parent.name)
         group_files = groupby(code_files, key=lambda x: x.parent.name)
         parts = []
@@ -168,11 +190,13 @@ class GitRepo(MultimodalPart):
                     parts.append(TextPart(text=code_content))
         return parts
 
-    def __get_parts_from_repos_issues(self, state="open"):
+    def __get_parts_from_repos_issues(self):
         """
         Get the issues from the repo
         :return:
         """
+        issues_state = self.config.get("issues_state", "open")
+
         remotes = self.repo.remotes
         assert len(remotes) > 0, "No remotes found"
         remote = remotes[0]
@@ -180,24 +204,24 @@ class GitRepo(MultimodalPart):
         g = Github()
         repo_path = urlparse(url).path[1:]
         remote_repo = g.get_repo(repo_path)
-        issues = remote_repo.get_issues(state=state)
+        issues = remote_repo.get_issues(state=issues_state)
         parts = []
         for issue in issues:
             parts.append(TextPart(text=issue.title))
         return parts
 
-    def content_parts(self, category: str = "code", **kwargs):
+    def content_parts(self):
         """
         Get the content parts for the repo
         :param category: the category of the content parts to get
         :return:
         """
         try:
-            if category == "code":
-                return self.__get_parts_from_code_files(**kwargs)
-            elif category == "issues":
-                return self.__get_parts_from_repos_issues(**kwargs)
-            raise Exception(f"Invalid category {category}")
+            functions_map = {
+                "code-files": self.__get_parts_from_code_files,
+                "issues": self.__get_parts_from_repos_issues
+            }
+            return functions_map[self.content]()
         except Exception as e:
             logger.error(e)
             raise e

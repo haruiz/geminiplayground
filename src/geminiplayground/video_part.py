@@ -1,3 +1,4 @@
+import logging
 import math
 from pathlib import Path
 
@@ -7,6 +8,8 @@ from tqdm import tqdm
 from geminiplayground.gemini_client import GeminiClient
 from geminiplayground.multi_modal_part import MultimodalPart
 from geminiplayground.utils import rm_tree, UploadFile, get_playground_cache_dir
+
+logger = logging.getLogger("rich")
 
 
 class VideoFile(MultimodalPart):
@@ -38,8 +41,8 @@ class VideoFile(MultimodalPart):
         fps = int(vidcap.get(cv2.CAP_PROP_FPS))
         duration = vidcap.get(cv2.CAP_PROP_FRAME_COUNT) / fps
         num_frames = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
-        print(f"Video duration: {duration} seconds")
-        print(f"Total number of frames: {num_frames}")
+        logger.info(f"Video duration: {duration} seconds")
+        logger.info(f"Total number of frames: {num_frames}")
         frame_file_prefix = self.video_path.stem
 
         frame_count = 0  # Initialize a frame counter
@@ -85,7 +88,7 @@ class VideoFile(MultimodalPart):
             )
 
         # Upload files to Gemini
-        for file in tqdm(files_to_upload, desc="Uploading frames to Gemini"):
+        for file in tqdm(files_to_upload, desc="Uploading frames"):
             self.gemini_client.upload_file(
                 file
             )

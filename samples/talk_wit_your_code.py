@@ -37,5 +37,4 @@ def talk_wit_your_code():
 
 
 if __name__ == '__main__':
-    # talk_wit_your_code()
-    talk_wit_your_video()
+    talk_wit_your_code()

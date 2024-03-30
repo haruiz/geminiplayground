@@ -1,6 +1,6 @@
 from rich import print
 
-from geminiplayground import GeminiClient, VideoFile, ImageFile
+from geminiplayground import GeminiClient, VideoFile, ImageFile, HarmCategory, HarmBlockThreshold
 
 if __name__ == "__main__":
     gemini_client = GeminiClient()
@@ -21,7 +21,12 @@ if __name__ == "__main__":
         "What do you think?"
     ]
 
-    response = gemini_client.generate_response("models/gemini-1.5-pro-latest", prompt)
+    response = gemini_client.generate_response("models/gemini-1.5-pro-latest", prompt,
+                                               generation_config={"temperature": 0.0, "top_p": 1.0},
+                                               safety_settings={
+                                                   "category": HarmCategory.DANGEROUS_CONTENT,
+                                                   "threshold": HarmBlockThreshold.BLOCK_NONE
+                                               })
     # Print the response
     for candidate in response.candidates:
         for part in candidate.content.parts:

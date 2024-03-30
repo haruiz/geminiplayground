@@ -24,7 +24,11 @@ def talk_wit_your_video():
     request = GenerateRequest(
         contents=[
             request_parts
-        ]
+        ],
+        generation_config={
+            "temperature": 0.0,
+            "top_p": 1.0
+        }
     )
 
     tokens_count = gemini_client.get_tokens_count(model, request)

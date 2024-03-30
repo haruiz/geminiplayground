@@ -24,7 +24,8 @@ def talk_wit_your_images():
     request = GenerateRequest(
         contents=[
             request_parts
-        ]
+        ],
+
     )
     tokens_count = gemini_client.get_tokens_count(model, request)
     print("Tokens count: ", tokens_count)

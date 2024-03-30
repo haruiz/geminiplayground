@@ -6,13 +6,15 @@ Gemini-Playground provides a Python interface and a UI to interact with last Goo
 Gemini's version, `models/gemini-1.5-pro-latest`. With Gemini Playground,
 you can:
 
-* **Upload and Handler various data types:** Upload text, images, videos, and
-  code to Gemini for analysis and interaction.
-* **Generate creative text formats:** Use uploaded content and
-  prompts to generate different creative text formats, like poems,
-  code, scripts, musical pieces, email, letters, etc.
-* **Leverage multimodality:** Combine different data types in your
-  prompts to unlock the power of Gemini's multimodal capabilities.
+* **Upload various data types:** Upload images, videos, and text files to Gemini for
+  analysis and interaction.
+* **Generate creative text formats:** Use prompts and uploaded content to generate
+  different creative text formats, like poems, code, scripts, musical pieces, email,
+  letters, etc.
+* **Interact with your code:** Ask Gemini to analyze your code, explain its
+  functionality, suggest improvements, or even write documentation for it.
+* **Explore multimodal capabilities:** Combine different data types in your prompts,
+  like asking Gemini to describe what's happening in a video and an image simultaneously.
 
 ### Features
 

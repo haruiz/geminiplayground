@@ -1,6 +1,6 @@
 from rich import print
 
-from geminiplayground import GeminiClient, VideoFile, HarmCategory, HarmBlockThreshold, GitRepo
+from geminiplayground import GeminiClient, VideoFile, GitRepo, HarmCategory, HarmBlockThreshold
 
 if __name__ == "__main__":
     gemini_client = GeminiClient()
@@ -12,7 +12,7 @@ if __name__ == "__main__":
     repo_url = "https://github.com/karpathy/ng-video-lecture"
     codebase = GitRepo.from_repo_url(repo_url, branch="master", config={
         "content": "code-files",  # "code-files" or "issues"
-        "file_extensions": ["*.py"]
+        "file_extensions": [".py"]
     })
 
     prompt = [
@@ -23,7 +23,6 @@ if __name__ == "__main__":
         "To create a short tutorial about transformers. "
         "Include some code snippets. Create the code snippets from the code provided. "
     ]
-
     response = gemini_client.generate_response("models/gemini-1.5-pro-latest", prompt,
                                                generation_config={"temperature": 0.0, "top_p": 1.0},
                                                safety_settings={

@@ -458,8 +458,6 @@ class GeminiClient(metaclass=Singleton):
             if safety_settings:
                 prompt_request.safety_settings = safety_settings
 
-        print(prompt_request.dict(exclude_none=True, by_alias=True))
-
         response = (
             self.genai_service.models()
             .generateContent(

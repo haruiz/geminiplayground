@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "geminiapp"
+version = "0.1.0"
+description = ""
+authors = ["haruiz <henryruiz22@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "geminiplayground", from = "src" }]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.12"
+google-api-python-client = "^2.123.0"
+pillow = "^10.2.0"
+streamlit = "^1.32.2"
+opencv-python = "^4.9.0.80"
+numpy = "^1.26.4"
+scipy = "^1.12.0"
+matplotlib = "^3.8.3"
+requests = "^2.31.0"
+python-dotenv = "^1.0.1"
+tqdm = "^4.66.2"
+pydantic = "^2.6.4"
+rich = "^13.7.1"
+validators = "^0.24.0"
+alive-progress = "^3.1.5"
+pygithub = "^2.3.0"
+watchdog = "^4.0.0"
+st-pages = "^0.4.5"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

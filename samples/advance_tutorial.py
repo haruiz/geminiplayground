@@ -1,6 +1,6 @@
 from rich import print
 
-from geminiplayground import GeminiClient, VideoFile, GitRepo, HarmCategory, HarmBlockThreshold
+from geminiplayground import GeminiClient, VideoFile, GitRepo
 
 if __name__ == "__main__":
     gemini_client = GeminiClient()
@@ -16,19 +16,14 @@ if __name__ == "__main__":
     })
 
     prompt = [
-        "Use this video:",
-        video,
-        "and this codebase:",
+        "Use this code:",
         codebase,
-        "To create a short tutorial about transformers. "
-        "Include some code snippets. Create the code snippets from the code provided. "
+        "Generate some code snippets"
     ]
-    response = gemini_client.generate_response("models/gemini-1.5-pro-latest", prompt,
-                                               generation_config={"temperature": 0.0, "top_p": 1.0},
-                                               safety_settings={
-                                                   "category": HarmCategory.DANGEROUS_CONTENT,
-                                                   "threshold": HarmBlockThreshold.BLOCK_NONE
-                                               })
+    model = "models/gemini-1.5-pro-latest"
+    token_count = gemini_client.get_tokens_count(model, prompt)
+    print("Tokens count: ", token_count)
+    response = gemini_client.generate_response(model, prompt)
     # Print the response
     for candidate in response.candidates:
         for part in candidate.content.parts:

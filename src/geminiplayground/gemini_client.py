@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import time
@@ -6,6 +7,7 @@ from functools import wraps
 from typing import List, Literal
 
 import googleapiclient
+import pydantic
 import requests
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -229,6 +231,9 @@ def handle_exceptions(func):
             else:
                 logger.error(f"Unexpected error: {e}")
             raise e
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            raise e
 
     return decorator
 
@@ -416,14 +421,33 @@ class GeminiClient(metaclass=Singleton):
         response = FileInfo.parse_obj(response)
         return response
 
+    @staticmethod
+    def __get_prompt_parts(prompt_request: GenerateRequest | list):
+        """
+        Get the parts of a prompt, and convert it to a GenerateRequest object.
+        :param prompt_request:
+        :return:
+        """
+        if isinstance(prompt_request, list):
+            parts = []
+            for part in prompt_request:
+                if isinstance(part, str):
+                    parts.append(TextPart(text="\n" + part + "\n"))
+                elif isinstance(part, MultimodalPart):
+                    parts.extend(part.content_parts())
+            prompt_request = GenerateRequest(contents=[GenerateRequestParts(parts=parts)])
+        return prompt_request
+
     @handle_exceptions
-    def get_tokens_count(self, model: str, prompt_request: GenerateRequest):
+    def get_tokens_count(self, model: str, prompt_request: GenerateRequest | list):
         """
         Get the number of tokens in a text.
         :param model: The model to use
         :param prompt_request: The prompt
         :return:
         """
+        prompt_request = self.__get_prompt_parts(prompt_request)
+
         response = (
             self.genai_service.models()
             .countTokens(
@@ -445,18 +469,7 @@ class GeminiClient(metaclass=Singleton):
         :return:
         """
 
-        if isinstance(prompt_request, list):
-            parts = []
-            for part in prompt_request:
-                if isinstance(part, str):
-                    parts.append(TextPart(text="\n" + part + "\n"))
-                elif isinstance(part, MultimodalPart):
-                    parts.extend(part.content_parts())
-            prompt_request = GenerateRequest(contents=[GenerateRequestParts(parts=parts)])
-            if generation_config:
-                prompt_request.generation_config = generation_config
-            if safety_settings:
-                prompt_request.safety_settings = safety_settings
+        prompt_request = self.__get_prompt_parts(prompt_request)
 
         response = (
             self.genai_service.models()
@@ -466,5 +479,10 @@ class GeminiClient(metaclass=Singleton):
             )
             .execute()
         )
-        response = CandidatesSchema.parse_obj(response)
-        return response
+        try:
+            response = CandidatesSchema.parse_obj(response)
+            return response
+        except pydantic.ValidationError as e:
+            logger.error(f"Error parsing response: {e}")
+            logger.error(json.dumps(response, indent=2))
+            raise e

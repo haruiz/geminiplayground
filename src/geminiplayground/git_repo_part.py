@@ -1,6 +1,5 @@
 import logging
 import typing
-from itertools import groupby
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -168,7 +167,9 @@ class GitRepo(MultimodalPart):
             except Exception as e:
                 logger.error(e)
                 raise e
-        return cls(repo_folder, **kwargs)
+        config = kwargs.setdefault("config", {"content": "code-files"})
+        print(repo_folder, config)
+        return cls(repo_folder, config=config)
 
     def __get_parts_from_code_files(self):
         """
@@ -179,15 +180,12 @@ class GitRepo(MultimodalPart):
         exclude_dirs = self.config.get("exclude_dirs", None)
 
         code_files = get_code_files_in_dir(self.repo_folder, file_extensions, exclude_dirs)
-        code_files = sorted(code_files, key=lambda x: x.parent.name)
-        group_files = groupby(code_files, key=lambda x: x.parent.name)
         parts = []
-        for group_name, group_files in group_files:
-            parts.append(TextPart(text=f"Files in folder {group_name}:"))
-            for file in group_files:
-                with open(file, "r") as f:
-                    code_content = f.read()
-                    parts.append(TextPart(text=code_content))
+        for file in code_files:
+            with open(file, "r") as f:
+                code_content = f.read()
+                parts.append(TextPart(text="\n" + "file: " + file.name + "\n"))
+                parts.append(TextPart(text=code_content))
         return parts
 
     def __get_parts_from_repos_issues(self):

@@ -47,7 +47,13 @@ pip install geminiplayground
 2. **Create a `GeminiClient` instance:**
 
 ```python
-from geminiplayground import GeminiClient
+from geminiplayground import (
+    GeminiClient,
+    VideoFile,
+    ImageFile,
+    HarmCategory,
+    HarmBlockThreshold
+)
 
 gemini_client = GeminiClient()
 ```
@@ -55,7 +61,6 @@ gemini_client = GeminiClient()
 3. **Upload files:**
 
 ```python
-from geminiplayground import VideoFile, ImageFile
 
 video_file_path = "BigBuckBunny_320x180.mp4"
 video_file = VideoFile(video_file_path, gemini_client=gemini_client)
@@ -81,7 +86,13 @@ multimodal_prompt = [
 5. **Generate a response:**
 
 ```python
-response = gemini_client.generate_response("models/gemini-1.5-pro-latest", prompt)
+response = gemini_client.generate_response("models/gemini-1.5-pro-latest", multimodal_prompt,
+                                           generation_config={"temperature": 0.0, "top_p": 1.0},
+                                           safety_settings={
+                                               "category": HarmCategory.DANGEROUS_CONTENT,
+                                               "threshold": HarmBlockThreshold.BLOCK_NONE
+                                           })
+
 # Print the response
 for candidate in response.candidates:
     for part in candidate.content.parts:

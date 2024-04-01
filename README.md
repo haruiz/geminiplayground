@@ -47,13 +47,9 @@ pip install geminiplayground
 2. **Create a `GeminiClient` instance:**
 
 ```python
-from geminiplayground import (
-    GeminiClient,
-    VideoFile,
-    ImageFile,
-    HarmCategory,
-    HarmBlockThreshold
-)
+from geminiplayground.core import GeminiClient
+from geminiplayground.parts import VideoFile, ImageFile
+from geminiplayground.schemas import HarmCategory, HarmBlockThreshold
 
 gemini_client = GeminiClient()
 ```
@@ -79,7 +75,7 @@ multimodal_prompt = [
     video_file,
     "and this image",
     image_file,
-    "What do you think? Be creative!"
+    "Explain what you see."
 ]
 ```
 
@@ -111,15 +107,17 @@ image is isolated on a black background.
 
 6. **You can also chat with your data:**
 
-**Talking with your code:**
+**Chat with your codebase:**
 
 ```python
 from rich import print
 
-from geminiplayground import GitRepo, GenerateRequestParts, TextPart, GenerateRequest, GeminiClient
+from geminiplayground.core import GeminiClient
+from geminiplayground.parts.git_repo_part import GitRepo
+from geminiplayground.schemas import GenerateRequestParts, TextPart, GenerateRequest
 
 
-def talk_wit_your_code():
+def chat_wit_your_code():
     """
     Get the content parts of a github repo and generate a request.
     :return:
@@ -157,18 +155,21 @@ def talk_wit_your_code():
 
 
 if __name__ == '__main__':
-    talk_wit_your_code()
+    chat_wit_your_code()
+
 ```
 
-**Talking with your video:**
+**Chat with your videos:**
 
 ```python
 from rich import print
 
-from geminiplayground import GenerateRequestParts, TextPart, GenerateRequest, GeminiClient, VideoFile
+from geminiplayground.core import GeminiClient
+from geminiplayground.parts import VideoFile
+from geminiplayground.schemas import GenerateRequestParts, TextPart, GenerateRequest
 
 
-def talk_wit_your_video():
+def chat_wit_your_video():
     """
     Get the content parts of a video and generate a request.
     :return:
@@ -176,20 +177,26 @@ def talk_wit_your_video():
     gemini_client = GeminiClient()
     model = "models/gemini-1.5-pro-latest"
 
-    video_file_path = "BigBuckBunny_320x180.mp4"
+    video_file_path = "./../data/BigBuckBunny_320x180.mp4"
     video_file = VideoFile(video_file_path, gemini_client=gemini_client)
-    # video_file.upload()
     video_parts = video_file.content_parts()
+    video_files = video_file.files[-4:]
+    for part in video_parts[:5]:
+        print(part)
 
     request_parts = GenerateRequestParts(parts=[
-        TextPart(text="You see this video?:"),
+        TextPart(text="check this video?:"),
         *video_parts,
-        TextPart(text="Describe what you see"),
+        TextPart(text="list the object you see in the video")
     ])
     request = GenerateRequest(
         contents=[
             request_parts
-        ]
+        ],
+        generation_config={
+            "temperature": 0.0,
+            "top_p": 1.0
+        }
     )
 
     tokens_count = gemini_client.get_tokens_count(model, request)
@@ -204,18 +211,21 @@ def talk_wit_your_video():
 
 
 if __name__ == '__main__':
-    talk_wit_your_video()
+    chat_wit_your_video()
+
 ```
 
-**Talking with your image:**
+**Chat with your images:**
 
 ```python
 from rich import print
 
-from geminiplayground import GenerateRequestParts, TextPart, GenerateRequest, GeminiClient, ImageFile
+from geminiplayground.core import GeminiClient
+from geminiplayground.parts import ImageFile
+from geminiplayground.schemas import GenerateRequestParts, TextPart, GenerateRequest
 
 
-def talk_wit_your_images():
+def chat_wit_your_images():
     """
     Get the content parts of an image and generate a request.
     :return:
@@ -223,10 +233,11 @@ def talk_wit_your_images():
     gemini_client = GeminiClient()
     model = "models/gemini-1.5-pro-latest"
 
-    image_file_path = "PNG_transparency_demonstration_1.png"
+    image_file_path = "https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png"
     image_file = ImageFile(image_file_path, gemini_client=gemini_client)
-    # video_file.upload()
     image_parts = image_file.content_parts()
+    image_files = image_file.files
+    print("Image files: ", image_files)
 
     request_parts = GenerateRequestParts(parts=[
         TextPart(text="You see this image?:"),
@@ -236,7 +247,8 @@ def talk_wit_your_images():
     request = GenerateRequest(
         contents=[
             request_parts
-        ]
+        ],
+
     )
     tokens_count = gemini_client.get_tokens_count(model, request)
     print("Tokens count: ", tokens_count)
@@ -250,7 +262,7 @@ def talk_wit_your_images():
 
 
 if __name__ == '__main__':
-    talk_wit_your_images()
+    chat_wit_your_images()
 ```
 
 This is a basic example.Explore the codebase and documentation for more

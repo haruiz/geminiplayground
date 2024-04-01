@@ -13,7 +13,6 @@ def chat_wit_your_code():
 
     repo = GitRepo.from_repo_url("https://github.com/karpathy/ng-video-lecture", config={
         "content": "code-files",  # "code-files" or "issues"
-        "exclude_dirs": ["frontend", "ui"],
         "file_extensions": [".py"]
     })
     repo_parts = repo.content_parts()

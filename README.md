@@ -6,7 +6,7 @@ Gemini-Playground provides a Python interface and a UI to interact with last Goo
 Gemini's version, `models/gemini-1.5-pro-latest`. With Gemini Playground,
 you can:
 
-* **Chat with your data:** Upload images, and videos using a simple API and
+* **Engage in conversation with your data:** Upload images, and videos using a simple API and
   generate responses based on your prompts.
 * **Chat with your codebase:** Ask Gemini to analyze your code, explain its
   functionality, suggest improvements, or even write documentation for it.

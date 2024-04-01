@@ -21,7 +21,7 @@ def chat_wit_your_code():
         TextPart(text="use this codebase:"),
         *repo_parts,
         TextPart(
-            text="Help me to write a Readme file for this codebase."),
+            text="Describe the `bigram.py` file."),
     ])
     request = GenerateRequest(
         contents=[

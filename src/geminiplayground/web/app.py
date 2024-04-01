@@ -7,14 +7,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-
 from .api import api
 from .db.orm_utils import create_db, drop_db
 from .ui import ui
+from .db.models import *
 
 BASE_DIR = Path(__file__).resolve().parent
 FILES_DIR = Path(BASE_DIR, "files")
-templates = Jinja2Templates(directory=str(Path(BASE_DIR, 'templates')))
+templates = Jinja2Templates(directory=str(Path(BASE_DIR, "templates")))
 
 os.environ["FILES_DIR"] = FILES_DIR.as_posix()
 
@@ -25,6 +25,7 @@ async def lifespan(app: FastAPI):
     Api life span
     :return:
     """
+
     print("ui is starting")
     drop_db()
     create_db()

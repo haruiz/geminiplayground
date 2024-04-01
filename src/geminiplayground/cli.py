@@ -6,10 +6,10 @@ cli = typer.Typer(invoke_without_command=True)
 
 @cli.callback()
 def ui(
-        host: str = "127.0.0.1",
-        port: int = 8081,
-        workers: int = 5,
-        reload: Annotated[bool, typer.Option("--reload")] = True,
+    host: str = "127.0.0.1",
+    port: int = 8081,
+    workers: int = 5,
+    reload: Annotated[bool, typer.Option("--reload")] = True,
 ):
     """
     Lauch legopy web app
@@ -27,10 +27,10 @@ def ui(
 
 @cli.command()
 def api(
-        host: str = "127.0.0.1",
-        port: int = 8081,
-        workers: int = 5,
-        reload: Annotated[bool, typer.Option("--reload")] = True,
+    host: str = "127.0.0.1",
+    port: int = 8081,
+    workers: int = 5,
+    reload: Annotated[bool, typer.Option("--reload")] = True,
 ):
     """
     Lauch legopy web app

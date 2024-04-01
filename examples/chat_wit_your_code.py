@@ -11,23 +11,24 @@ def chat_wit_your_code():
     :return:
     """
 
-    repo = GitRepo.from_repo_url("https://github.com/karpathy/ng-video-lecture", config={
-        "content": "code-files",  # "code-files" or "issues"
-        "file_extensions": [".py"]
-    })
+    repo = GitRepo.from_repo_url(
+        "https://github.com/karpathy/ng-video-lecture",
+        branch="master",
+        config={
+            "content": "code-files",  # "code-files" or "issues"
+            "file_extensions": [".py"],
+        },
+    )
     repo_parts = repo.content_parts()
 
-    request_parts = GenerateRequestParts(parts=[
-        TextPart(text="use this codebase:"),
-        *repo_parts,
-        TextPart(
-            text="Describe the `bigram.py` file."),
-    ])
-    request = GenerateRequest(
-        contents=[
-            request_parts
+    request_parts = GenerateRequestParts(
+        parts=[
+            TextPart(text="use this codebase:"),
+            *repo_parts,
+            TextPart(text="Describe the `bigram.py` file."),
         ]
     )
+    request = GenerateRequest(contents=[request_parts])
     model = "models/gemini-1.5-pro-latest"
     gemini_client = GeminiClient()
     tokens_count = gemini_client.get_tokens_count(model, request)
@@ -41,5 +42,5 @@ def chat_wit_your_code():
                 print(part.text)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     chat_wit_your_code()

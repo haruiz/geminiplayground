@@ -20,19 +20,15 @@ def chat_wit_your_video():
     for part in video_parts[:5]:
         print(part)
 
-    request_parts = GenerateRequestParts(parts=[
-        TextPart(text="check this video?:"),
-        *video_parts,
-        TextPart(text="list the object you see in the video")
-    ])
+    request_parts = GenerateRequestParts(
+        parts=[
+            TextPart(text="check this video?:"),
+            *video_parts,
+            TextPart(text="list the object you see in the video"),
+        ]
+    )
     request = GenerateRequest(
-        contents=[
-            request_parts
-        ],
-        generation_config={
-            "temperature": 0.0,
-            "top_p": 1.0
-        }
+        contents=[request_parts], generation_config={"temperature": 0.0, "top_p": 1.0}
     )
 
     tokens_count = gemini_client.get_tokens_count(model, request)
@@ -46,5 +42,5 @@ def chat_wit_your_video():
                 print(part.text)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     chat_wit_your_video()

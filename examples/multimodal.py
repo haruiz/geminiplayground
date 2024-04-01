@@ -2,7 +2,7 @@ from geminiplayground.core import GeminiClient
 from geminiplayground.parts import VideoFile, ImageFile
 from geminiplayground.schemas import HarmCategory, HarmBlockThreshold
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     gemini_client = GeminiClient()
 
@@ -19,14 +19,17 @@ if __name__ == '__main__':
         video_file,
         "and this image",
         image_file,
-        "Explain what you see."
+        "Explain what you see.",
     ]
-    response = gemini_client.generate_response("models/gemini-1.5-pro-latest", multimodal_prompt,
-                                               generation_config={"temperature": 0.0, "top_p": 1.0},
-                                               safety_settings={
-                                                   "category": HarmCategory.DANGEROUS_CONTENT,
-                                                   "threshold": HarmBlockThreshold.BLOCK_NONE
-                                               })
+    response = gemini_client.generate_response(
+        "models/gemini-1.5-pro-latest",
+        multimodal_prompt,
+        generation_config={"temperature": 0.0, "top_p": 1.0},
+        safety_settings={
+            "category": HarmCategory.DANGEROUS_CONTENT,
+            "threshold": HarmBlockThreshold.BLOCK_NONE,
+        },
+    )
 
     # Print the response
     for candidate in response.candidates:

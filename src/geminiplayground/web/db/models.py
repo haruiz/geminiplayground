@@ -15,14 +15,12 @@ class FileEntry:
     __tablename__ = "file"
 
     name: Mapped[str] = mapped_column(primary_key=True)
-    display_name: Mapped[str] = mapped_column()
     mime_type: Mapped[str] = mapped_column()
     uri: Mapped[str] = mapped_column()
     part_id: Mapped[str] = mapped_column(ForeignKey("part.name"))
     part: Mapped["MultimodalPartEntry"] = relationship(
-        "MultimodalPartEntry",
-        back_populates="files",
-        default=None)
+        "MultimodalPartEntry", back_populates="files", default=None
+    )
 
     def __repr__(self):
         return f"<{self.__class__.__name__}({self.name}, {self.name})>"
@@ -31,7 +29,7 @@ class FileEntry:
 @reg.mapped_as_dataclass
 class MultimodalPartEntry:
     """
-    Project model.
+    Multimodal part model.
     """
 
     __tablename__ = "part"
@@ -42,7 +40,7 @@ class MultimodalPartEntry:
         "FileEntry",
         back_populates="part",
         default_factory=list,
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
 
     def as_dict(self):

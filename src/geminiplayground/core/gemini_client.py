@@ -3,6 +3,7 @@ import logging
 import os
 import typing
 from functools import wraps
+from time import sleep
 
 import googleapiclient
 import pydantic
@@ -14,8 +15,16 @@ from rich.table import Table
 from tqdm import tqdm
 
 from geminiplayground.schemas.extra_schemas import UploadFile
-from geminiplayground.schemas.request_schemas import GenerationSettings, GenerateRequestParts, GenerateRequest
-from geminiplayground.schemas.response_schemas import FileInfo, ModelInfo, CandidatesSchema
+from geminiplayground.schemas.request_schemas import (
+    GenerationSettings,
+    GenerateRequestParts,
+    GenerateRequest,
+)
+from geminiplayground.schemas.response_schemas import (
+    FileInfo,
+    ModelInfo,
+    CandidatesSchema,
+)
 from geminiplayground.utils import Singleton
 
 logger = logging.getLogger("rich")
@@ -114,7 +123,9 @@ class GeminiClient(metaclass=Singleton):
             if page_token is not None:
                 request_params["pageToken"] = page_token
             response = self.genai_service.files().list(**request_params).execute()
-            files.extend([FileInfo.parse_obj(file) for file in response.get("files", [])])
+            files.extend(
+                [FileInfo.parse_obj(file) for file in response.get("files", [])]
+            )
             # Break the loop if not fetching all files or if there's no next page
             files = sorted(files, key=lambda x: x.create_time, reverse=True)
             if query_fn is not None:
@@ -167,9 +178,10 @@ class GeminiClient(metaclass=Singleton):
         return file
 
     @handle_exceptions
-    def upload_files(self, *files: typing.List[UploadFile], max_workers=5):
+    def upload_files(self, *files: typing.List[UploadFile], timeout: float = 0.0):
         """
         Upload multiple files to Gemini.
+        :param timeout:  The time to wait between each file upload
         :param files: The files to upload
         :return:
         """
@@ -182,13 +194,15 @@ class GeminiClient(metaclass=Singleton):
         #             uploaded_files.append(result)
         #             progress.update(1)  # Update the progress bar by one
         for file in tqdm(files, desc="Uploading files"):
+            sleep(timeout)
             uploaded_files.append(self.upload_file(file))
         return uploaded_files
 
     @handle_exceptions
-    def delete_files(self, *files: typing.List[FileInfo | str], max_workers=5):
+    def delete_files(self, *files: typing.List[FileInfo | str], timeout: float = 0.5):
         """
         Remove multiple files from Gemini.
+        :param timeout: The time to wait between each file deletion
         :param files: The files to remove
         :return:
         """
@@ -202,6 +216,7 @@ class GeminiClient(metaclass=Singleton):
         #             future.result()
         #             progress.update(1)
         for file in tqdm(files, desc="Removing files"):
+            sleep(timeout)
             self.delete_file(file)
 
     @staticmethod
@@ -221,7 +236,9 @@ class GeminiClient(metaclass=Singleton):
                     parts.append(TextPart(text="\n" + part + "\n"))
                 elif isinstance(part, MultimodalPart):
                     parts.extend(part.content_parts())
-            prompt_request = GenerateRequest(contents=[GenerateRequestParts(parts=parts)])
+            prompt_request = GenerateRequest(
+                contents=[GenerateRequestParts(parts=parts)]
+            )
         return prompt_request
 
     @handle_exceptions
@@ -244,9 +261,13 @@ class GeminiClient(metaclass=Singleton):
         return response["totalTokens"]
 
     @handle_exceptions
-    def generate_response(self, model: str, prompt_request: GenerateRequest | list,
-                          generation_config: GenerationSettings | dict = None,
-                          safety_settings: dict = None):
+    def generate_response(
+        self,
+        model: str,
+        prompt_request: GenerateRequest | list,
+        generation_config: GenerationSettings | dict = None,
+        safety_settings: dict = None,
+    ):
         """
         Generate a response from a prompt.
         :param model: The model to use
@@ -265,8 +286,7 @@ class GeminiClient(metaclass=Singleton):
         response = (
             self.genai_service.models()
             .generateContent(
-                model=model,
-                body=prompt_request.dict(exclude_none=True, by_alias=True)
+                model=model, body=prompt_request.dict(exclude_none=True, by_alias=True)
             )
             .execute()
         )

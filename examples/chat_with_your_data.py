@@ -11,18 +11,21 @@ if __name__ == "__main__":
     video = VideoFile(video_path, gemini_client=gemini_client)
 
     repo_url = "https://github.com/karpathy/ng-video-lecture"
-    codebase = GitRepo.from_repo_url(repo_url, branch="master", config={
-        "content": "code-files",  # "code-files" or "issues"
-        "file_extensions": [".py"]
-    })
+    codebase = GitRepo.from_repo_url(
+        repo_url,
+        branch="master",
+        config={
+            "content": "code-files",  # "code-files" or "issues"
+            "file_extensions": [".py"],
+        },
+    )
 
     prompt = [
-        "Create a blog post"
-        "Title: Introduction to transformers",
+        "Create a blog post" "Title: Introduction to transformers",
         "based on the following video:",
         video,
         "Also, create some code snippets from the codebase: ",
-        codebase
+        codebase,
     ]
     model = "models/gemini-1.5-pro-latest"
     token_count = gemini_client.get_tokens_count(model, prompt)

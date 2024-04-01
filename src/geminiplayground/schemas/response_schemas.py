@@ -35,7 +35,9 @@ class FileInfo(BaseModel):
         Convert the fileInfo to a FilePart
         :return:
         """
-        return FilePart(file_data=FilePartData(file_uri=str(self.uri), mime_type=self.mime_type))
+        return FilePart(
+            file_data=FilePartData(file_uri=str(self.uri), mime_type=self.mime_type)
+        )
 
 
 # Model schemas

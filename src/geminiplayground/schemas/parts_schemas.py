@@ -14,7 +14,9 @@ class FilePartData(BaseModel):
 
 
 class FilePart(BaseModel):
-    file_data: FilePartData = Field(alias="fileData", description="Information about the file.")
+    file_data: FilePartData = Field(
+        alias="fileData", description="Information about the file."
+    )
 
     class Config:
         populate_by_name = True

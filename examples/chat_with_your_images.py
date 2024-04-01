@@ -19,16 +19,15 @@ def chat_wit_your_images():
     image_files = image_file.files
     print("Image files: ", image_files)
 
-    request_parts = GenerateRequestParts(parts=[
-        TextPart(text="You see this image?:"),
-        *image_parts,
-        TextPart(text="Describe what you see"),
-    ])
+    request_parts = GenerateRequestParts(
+        parts=[
+            TextPart(text="You see this image?:"),
+            *image_parts,
+            TextPart(text="Describe what you see"),
+        ]
+    )
     request = GenerateRequest(
-        contents=[
-            request_parts
-        ],
-
+        contents=[request_parts],
     )
     tokens_count = gemini_client.get_tokens_count(model, request)
     print("Tokens count: ", tokens_count)
@@ -41,5 +40,5 @@ def chat_wit_your_images():
                 print(part.text)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     chat_wit_your_images()

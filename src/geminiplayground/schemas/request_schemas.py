@@ -8,30 +8,36 @@ from .parts_schemas import FilePart, TextPart
 
 class GenerationSettings(BaseModel):
     stopSequences: List[str] = Field(
-        None, alias="stopSequences",
-        description="The set of character sequences (up to 5) that will stop output generation. "
+        None,
+        alias="stopSequences",
+        description="The set of character sequences (up to 5) that will stop output generation. ",
     )
     candidateCount: int = Field(
-        None, alias="candidateCount",
+        None,
+        alias="candidateCount",
         description="Number of generated responses to return.This value must be between [1, 8], inclusive. If unset, "
-                    "this will default to 1."
+        "this will default to 1.",
     )
     maxOutputTokens: int = Field(
-        None, alias="maxOutputTokens",
+        None,
+        alias="maxOutputTokens",
         description="The maximum number of tokens to generate. The default value varies by model, see the "
-                    "Model.output_token_limit attribute of the Model returned from the getModel function."
+        "Model.output_token_limit attribute of the Model returned from the getModel function.",
     )
     temperature: float = Field(
-        None, description="Controls randomness in generation. Lower values make the model more deterministic. High "
-                          "values make the model more creative."
+        None,
+        description="Controls randomness in generation. Lower values make the model more deterministic. High "
+        "values make the model more creative.",
     )
     topP: float = Field(
-        None, alias="topP",
-        description="The maximum cumulative probability of tokens to consider when sampling."
+        None,
+        alias="topP",
+        description="The maximum cumulative probability of tokens to consider when sampling.",
     )
     topK: int = Field(
-        None, alias="topK",
-        description="The maximum number of tokens to consider when sampling."
+        None,
+        alias="topK",
+        description="The maximum number of tokens to consider when sampling.",
     )
 
 
@@ -51,8 +57,12 @@ class HarmBlockThreshold(str, Enum):
 
 
 class SafetySettings(BaseModel):
-    category: HarmCategory = Field(None, description="The category of harmful content to block.")
-    threshold: HarmBlockThreshold = Field(None, description="The threshold of harmful content to block.")
+    category: HarmCategory = Field(
+        None, description="The category of harmful content to block."
+    )
+    threshold: HarmBlockThreshold = Field(
+        None, description="The threshold of harmful content to block."
+    )
 
 
 class GenerateRequestParts(BaseModel):
@@ -60,7 +70,12 @@ class GenerateRequestParts(BaseModel):
 
 
 class GenerateRequest(BaseModel):
-    contents: list[GenerateRequestParts] = Field(..., description="Contents of the request.")
-    generation_config: GenerationSettings | dict = Field(None, alias="generationConfig",
-                                                         description="Generation configuration.")
-    safety_settings: dict = Field(None, alias="safetySettings", description="Safety settings.")
+    contents: list[GenerateRequestParts] = Field(
+        ..., description="Contents of the request."
+    )
+    generation_config: GenerationSettings | dict = Field(
+        None, alias="generationConfig", description="Generation configuration."
+    )
+    safety_settings: dict = Field(
+        None, alias="safetySettings", description="Safety settings."
+    )

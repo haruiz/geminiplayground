@@ -1,6 +1,6 @@
 ## Gemini Playground
 
-![Gemini Logo](images/logo.png)
+![Gemini Logo](https://raw.githubusercontent.com/haruiz/geminiplayground/main/images/logo.png)
 
 Gemini-Playground provides a Python interface and a UI to interact with last Google's
 Gemini's version, `models/gemini-1.5-pro-latest`. With Gemini Playground,
@@ -272,7 +272,7 @@ geminiplayground ui
 
 This will start a local server and open the GUI in your default browser.
 
-![Gemini GUI](images/ui.png)
+![Gemini GUI](https://raw.githubusercontent.com/haruiz/geminiplayground/main/images/ui.png))
 
 ### Contributing
 

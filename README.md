@@ -280,5 +280,5 @@ Contributions are welcome! Please see the`CONTRIBUTING.md` file for guidelines [
 
 ### License
 
-This codebase is licensed under the MIT License.See the`LICENSE`file for details. [Coming soon].
+This codebase is licensed under the MIT License.See the`LICENSE`file for details.
 

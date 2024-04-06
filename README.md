@@ -262,6 +262,18 @@ if __name__ == '__main__':
 This is a basic example.Explore the codebase and documentation for more
 advanced functionalities and examples.
 
+### GUI
+
+You can also use the GUI to interact with the API. To start the GUI, run:
+
+```bash
+geminiplayground ui
+```
+
+This will start a local server and open the GUI in your default browser.
+
+![Gemini GUI](images/ui.png)
+
 ### Contributing
 
 Contributions are welcome! Please see the`CONTRIBUTING.md` file for guidelines.

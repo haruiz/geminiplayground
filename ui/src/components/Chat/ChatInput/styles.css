@@ -1,5 +1,21 @@
+/*!**************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[11].oneOf[12].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[11].oneOf[12].use[3]!./src/components/Chat/ChatInput/styles.css ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************/
 /* Suggestions items */
+.blog-pre {
+    margin-bottom: 3em !important;
+    position: relative;
+}
 
+.code-copy-btn {
+    color: white;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
 
 .tagify {
     --tags-disabled-bg: #F1F1F1;
@@ -7,18 +23,18 @@
     --tags-hover-border-color: #CCC;
     --tags-focus-border-color: #3595f6;
     --tag-border-radius: 3px;
-    --tag-bg: #7e7474;
-    --tag-hover: #6D28D9;
+    --tag-bg: black;
+    --tag-hover: black;
     --tag-text-color: white;
     --tag-text-color--edit: white;
     --tag-pad: 0.3em 0.5em;
     --tag-inset-shadow-size: 1.1em;
-    --tag-invalid-color: #D39494;
-    --tag-invalid-bg: rgba(211, 148, 148, 0.5);
+    --tag-invalid-color: white;
+    --tag-invalid-bg: black;
     --tag--min-width: 1ch;
     --tag--max-width: 100%;
     --tag-hide-transition: 0.3s;
-    --tag-remove-bg: rgba(211, 148, 148, 0.3);
+    --tag-remove-bg: black;
     --tag-remove-btn-color: white;
     --tag-remove-btn-bg: none;
     --tag-remove-btn-bg--hover: #c77777;
@@ -36,16 +52,36 @@
     cursor: text;
     outline: 0;
     position: relative;
-    box-sizing: border-box;
+    /*box-sizing: border-box;*/
     transition: .1s;
 }
-.tagify__dropdown.chat-input .tagify__dropdown__item{
+
+.custom-tag {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    margin: 0 5px 5px 0;
+    padding: 0 5px;
+    height: 32px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 32px;
+    background-color: black;
+    color: #333;
+    border: 1px solid #ddd;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.tagify__dropdown.chat-input .tagify__dropdown__item {
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 0 0.8em;
     background-color: black;
-    grid-template-areas: "avatar name"
-                        "avatar desc";
+    grid-template-areas: "avatar name" "avatar desc";
     margin: 0;
     padding: 5px;
 }
@@ -56,48 +92,42 @@
     overflow: auto;
 }
 
-.tagify__input br{
+.tagify__input br {
     display: none;
 }
 
-.tagify__input div,
-.tagify__input p{
-    display: inline-block;
-    white-space: nowrap;
-    overflow: auto;
-    overflow-y: hidden;
+.tagify__input div, .tagify__input p {
+    /* display: inline-block; */
+    /* white-space: nowrap; */
+    /* overflow: auto; */
+    /* overflow-y: hidden; */
 }
 
-.tagify__dropdown.chat-input .tagify__dropdown__item:hover .tagify__dropdown__item__avatar-wrap{
+.tagify__dropdown.chat-input .tagify__dropdown__item:hover .tagify__dropdown__item__avatar-wrap {
     transform: scale(1.2);
 }
 
-.tagify__dropdown.chat-input .tagify__dropdown__item__avatar-wrap{
+.tagify__dropdown.chat-input .tagify__dropdown__item__avatar-wrap {
     grid-area: avatar;
     height: 32px;
     overflow: hidden;
     transition: .1s ease-out;
 }
 
-.tagify__dropdown.chat-input header.tagify__dropdown__item > div,
-.tagify__dropdown.chat-input .tagify__dropdown__item strong{
+.tagify__dropdown.chat-input header.tagify__dropdown__item > div, .tagify__dropdown.chat-input .tagify__dropdown__item strong {
     grid-area: name;
     width: 100%;
     align-self: center;
 }
 
-
-.tagify__dropdown.chat-input span{
+.tagify__dropdown.chat-input span {
     grid-area: desc;
     font-size: .9em;
     opacity: .6;
-
 }
 
-
-.tagify__dropdown.chat-input img{
+.tagify__dropdown.chat-input img {
     height: 100%;
     width: 100%;
     text-align: center;
 }
-

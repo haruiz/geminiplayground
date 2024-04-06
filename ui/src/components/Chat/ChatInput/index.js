@@ -19,14 +19,16 @@ function tagTemplate(tagData) {
                 contenteditable='false'
                 spellcheck='false'
                 tabIndex="-1"
-                class='tagify__tag tagify__tag--secondary'
+                class='tagify__tag  custom-tag'
                 {this.getAttributes(tagData)}>
             <x title='' class='tagify__tag__removeBtn' role='button' aria-label='remove tag'></x>
-            <div>
+            <div style="display: flex;  align-items: center"> 
                 <div class='tagify__tag__avatar-wrap' >
                     <img  alt="icon" height="32px" width="32px" src="${tagData.icon}" />
                 </div>
-                <span class='tagify__tag-text' style="margin-left: 10px">${tagData.name}</span>
+                <div class='tagify__tag__info' >
+                   <span class='tagify__tag-text' style="margin-left: 10px">${tagData.name}</span>
+                </div>
             </div>
         </tag>
         `

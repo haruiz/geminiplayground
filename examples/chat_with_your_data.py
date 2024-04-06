@@ -3,6 +3,9 @@ from rich import print
 from geminiplayground.core import GeminiClient
 from geminiplayground.parts import VideoFile
 from geminiplayground.parts.git_repo_part import GitRepo
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
 
 if __name__ == "__main__":
     gemini_client = GeminiClient()
@@ -19,7 +22,6 @@ if __name__ == "__main__":
             "file_extensions": [".py"],
         },
     )
-
     prompt = [
         "Create a blog post" "Title: Introduction to transformers",
         "based on the following video:",

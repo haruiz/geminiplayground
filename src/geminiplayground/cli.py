@@ -17,10 +17,15 @@ def ui(
     Lauch legopy web app
     """
     import uvicorn
+    # attempt to load the api key from the .env file
+    from dotenv import load_dotenv, find_dotenv
+    load_dotenv(find_dotenv())
 
+    # receive the api key from the command line
     if api_key:
         os.environ["AISTUDIO_API_KEY"] = api_key
 
+    #
     if not os.environ.get("AISTUDIO_API_KEY"):
         typer.echo(
             "Please set the AISTUDIO_API_KEY environment variable, or create a .env file with the api key obtained "

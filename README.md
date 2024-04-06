@@ -272,14 +272,14 @@ geminiplayground ui
 
 This will start a local server and open the GUI in your default browser.
 
-![Gemini GUI](https://raw.githubusercontent.com/haruiz/geminiplayground/main/images/ui.png))
+![Gemini GUI](https://raw.githubusercontent.com/haruiz/geminiplayground/main/images/ui.png)
 
 ### Contributing
 
-Contributions are welcome! Please see the`CONTRIBUTING.md` file for guidelines.
+Contributions are welcome! Please see the`CONTRIBUTING.md` file for guidelines [Coming soon].
 
 ### License
 
-This codebase is licensed under the MIT License.See the`LICENSE`file for details.
+This codebase is licensed under the MIT License.See the`LICENSE`file for details. [Coming soon].
 
-
+```

@@ -14,9 +14,9 @@ from rich.console import Console
 from rich.table import Table
 from tqdm import tqdm
 
+from geminiplayground.schemas import ChatHistory, ChatMessage, TextPart
 from geminiplayground.schemas.extra_schemas import UploadFile
 from geminiplayground.schemas.request_schemas import (
-    GenerationSettings,
     GenerateRequestParts,
     GenerateRequest,
 )
@@ -60,17 +60,56 @@ def handle_exceptions(func):
     return decorator
 
 
+class ChatSession:
+    def __init__(self, client, model, history=None):
+        self.client = client
+        self.model = model
+        self.history = history or []
+
+    def send_message(self, user_prompt, stream=False, **kwargs):
+        try:
+            user_prompt = self.client.normalize_prompt(user_prompt)
+            self.history.append(ChatMessage(role="user", parts=user_prompt))
+            model_response = self.client.generate_response(self.model, ChatHistory(messages=self.history),
+                                                           stream=stream, **kwargs)
+            if stream:
+                message_parts = []
+                for chunk_response in model_response:
+                    yield chunk_response
+                    message_parts.extend(chunk_response.candidates[0].content.parts)
+                squeezed_response = "".join([part.text for part in message_parts])
+                message_parts = [TextPart(text=squeezed_response)]
+                self.history.append(ChatMessage(role="model", parts=message_parts))
+            else:
+                model_response = self.client.generate(self.model, ChatHistory(messages=self.history))
+                message_parts = model_response.candidates[0].content.parts
+                self.history.append(ChatMessage(role="model", parts=message_parts))
+                return model_response
+        except (pydantic.ValidationError, HttpError, Exception) as e:
+            logger.error(f"Error sending message: {e}")
+            raise e
+
+    def close(self):
+        self.history = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+
 class GeminiClient(metaclass=Singleton):
     """
     A client for the Gemini API.
     """
 
-    def __init__(self, api_key=None):
+    def __init__(self, api_key=None, version="v1beta"):
         if not api_key:
             api_key = os.getenv("AISTUDIO_API_KEY", None)
         if not api_key:
             raise ValueError("API_KEY must be provided.")
-        discovery_url = f"https://generativelanguage.googleapis.com/$discovery/rest?version=v1beta&key={api_key}"
+        discovery_url = f"https://generativelanguage.googleapis.com/$discovery/rest?version={version}&key={api_key}"
         discovery_docs = requests.get(discovery_url).content
         self.genai_service = googleapiclient.discovery.build_from_document(
             discovery_docs, developerKey=api_key
@@ -206,9 +245,8 @@ class GeminiClient(metaclass=Singleton):
         :param files: The files to remove
         :return:
         """
-        if all(isinstance(file, FileInfo) for file in files):
-            files = [file.name for file in files]
 
+        files = [file.name if isinstance(file, FileInfo) else file for file in files]
         # with ThreadPoolExecutor(max_workers=max_workers) as executor:
         #     tasks = [executor.submit(self.delete_file, file) for file in files]
         #     with tqdm(total=len(tasks), desc="Removing files") as progress:
@@ -220,80 +258,149 @@ class GeminiClient(metaclass=Singleton):
             self.delete_file(file)
 
     @staticmethod
-    def normalize_prompt_request(prompt_request: GenerateRequest | list):
+    # Adjust the type hint for `prompt_request` to indicate it can be one of several types
+    def normalize_prompt(prompt: list | str) -> typing.List:
         """
         Get the parts of a prompt, and convert it to a GenerateRequest object.
-        :param prompt_request:
-        :return:
+        :param prompt: The prompt
+        :return: A GenerateRequest object.
         """
         from geminiplayground.schemas import TextPart
         from geminiplayground.parts import MultimodalPart
 
-        if isinstance(prompt_request, list):
-            parts = []
-            for part in prompt_request:
-                if isinstance(part, str):
-                    parts.append(TextPart(text="\n" + part + "\n"))
-                elif isinstance(part, MultimodalPart):
-                    parts.extend(part.content_parts())
-            prompt_request = GenerateRequest(
-                contents=[GenerateRequestParts(parts=parts)]
-            )
-        return prompt_request
+        parts = []
+        # Normalize input to always be a list
+        if isinstance(prompt, str):
+            prompt = [prompt]
+
+        for part in prompt:
+            if isinstance(part, str):
+                parts.append(TextPart(text="\n" + part + "\n"))
+            elif isinstance(part, MultimodalPart):
+                parts.extend(part.content_parts())
+        return parts
 
     @handle_exceptions
-    def get_tokens_count(self, model: str, prompt_request: GenerateRequest | list):
+    def get_tokens_count(self, model: str, prompt: GenerateRequest | list):
         """
         Get the number of tokens in a text.
+        :param prompt:  The prompt
         :param model: The model to use
-        :param prompt_request: The prompt
         :return:
         """
-        prompt_request = self.normalize_prompt_request(prompt_request)
-
+        if isinstance(prompt, GenerateRequest):
+            generate_request = prompt
+        else:
+            prompt = self.normalize_prompt(prompt)
+            generate_request = GenerateRequest(
+                contents=[GenerateRequestParts(parts=prompt)]
+            )
         response = (
             self.genai_service.models()
             .countTokens(
-                model=model, body=prompt_request.dict(exclude_none=True, by_alias=True)
+                model=model, body=generate_request.dict(exclude_none=True, by_alias=True)
             )
             .execute()
         )
         return response["totalTokens"]
 
     @handle_exceptions
-    def generate_response(
-        self,
-        model: str,
-        prompt_request: GenerateRequest | list,
-        generation_config: GenerationSettings | dict = None,
-        safety_settings: dict = None,
-    ):
+    def generate(
+            self,
+            model: str,
+            prompt: GenerateRequest | ChatHistory | list | str | dict,
+            **kwargs,
+    ) -> CandidatesSchema:
         """
         Generate a response from a prompt.
         :param model: The model to use
-        :param prompt_request: The prompt
-        :param generation_config: Generation settings
-        :param safety_settings: Safety settings
+        :param prompt: The prompt
         :return:
         """
+        generate_request = self.__mk_generative_request(prompt, **kwargs)
 
-        prompt_request = self.normalize_prompt_request(prompt_request)
-        if generation_config:
-            prompt_request.generation_config = generation_config
-        if safety_settings:
-            prompt_request.safety_settings = safety_settings
-
-        response = (
-            self.genai_service.models()
-            .generateContent(
-                model=model, body=prompt_request.dict(exclude_none=True, by_alias=True)
-            )
-            .execute()
-        )
         try:
+            response = (
+                self.genai_service.models()
+                .generateContent(
+                    model=model, body=generate_request.dict(exclude_none=True, by_alias=True)
+                )
+                .execute()
+            )
+            logger.debug(json.dumps(response, indent=2))
             response = CandidatesSchema.parse_obj(response)
             return response
         except pydantic.ValidationError as e:
             logger.error(f"Error parsing response: {e}")
-            logger.error(json.dumps(response, indent=2))
             raise e
+
+    @handle_exceptions
+    def stream(self, model: str, prompt: GenerateRequest | list | str | dict, **kwargs):
+        """
+        Stream responses from a prompt.
+        :param timeout: The timeout to wait for the next candidate
+        :param model: The model to use
+        :param prompt: The prompt
+        :param kwargs: Additional arguments
+        :return:
+        """
+        generate_request = self.__mk_generative_request(prompt, **kwargs)
+        timeout = kwargs.get("timeout", 0.0)
+
+        response = (
+            self.genai_service.models()
+            .streamGenerateContent(
+                model=model, body=generate_request.dict(exclude_none=True, by_alias=True), alt="json"
+            ).
+            execute()
+        )
+        for chunk in response:
+            if timeout:
+                sleep(timeout)
+            chunk_response = CandidatesSchema.parse_obj(chunk)
+            yield chunk_response
+
+    def __mk_generative_request(self, prompt, **kwargs):
+        assert isinstance(prompt,
+                          (GenerateRequest, ChatHistory, list, str)), "Prompt must be a GenerateRequest, list, or str."
+        if isinstance(prompt, GenerateRequest):
+            generate_request = prompt
+        elif isinstance(prompt, ChatHistory):
+            generate_request = GenerateRequest(contents=prompt.messages)
+        else:
+            prompt = self.normalize_prompt(prompt)
+            generate_request = GenerateRequest(
+                contents=[GenerateRequestParts(parts=prompt)]
+            )
+        generation_config = kwargs.get("generation_config", None)
+        safety_settings = kwargs.get("safety_settings", None)
+        if generation_config is not None:
+            generate_request.generation_config = generation_config
+        if safety_settings is not None:
+            generate_request.safety_settings = safety_settings
+        return generate_request
+
+    def generate_response(self, model: str, prompt: GenerateRequest | list | str | dict, stream: bool = False,
+                          **kwargs):
+        """
+        Generate a response from a prompt.
+        :param stream:  Whether to stream the response
+        :param model: The model to use
+        :param prompt: The prompt
+        :return:
+        """
+        if stream:
+            return self.stream(model, prompt, **kwargs)
+        return self.generate(model, prompt, **kwargs)
+
+    @handle_exceptions
+    def start_chat(self, model: str, history: list | ChatHistory = None, **kwargs):
+        """
+        Start a chat session.
+        :param model: The model to use
+        :param history: The chat history
+        :return:
+        """
+        if isinstance(history, ChatHistory):
+            history = history.messages
+        return ChatSession(self, model, history, **kwargs)

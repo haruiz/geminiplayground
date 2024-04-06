@@ -13,7 +13,7 @@ def chat_wit_your_video():
     gemini_client = GeminiClient()
     model = "models/gemini-1.5-pro-latest"
 
-    video_file_path = "./../data/BigBuckBunny_320x180.mp4"
+    video_file_path = "./../data/transformers-explained.mp4"
     video_file = VideoFile(video_file_path, gemini_client=gemini_client)
     video_parts = video_file.content_parts()
     video_files = video_file.files[-4:]
@@ -22,15 +22,13 @@ def chat_wit_your_video():
 
     request_parts = GenerateRequestParts(
         parts=[
-            TextPart(text="check this video?:"),
-            *video_parts,
-            TextPart(text="list the object you see in the video"),
+            TextPart(text="What is the following video about?"),
+            *video_parts
         ]
     )
     request = GenerateRequest(
-        contents=[request_parts], generation_config={"temperature": 0.0, "top_p": 1.0}
+        contents=[request_parts]
     )
-
     tokens_count = gemini_client.get_tokens_count(model, request)
     print("Tokens count: ", tokens_count)
     response = gemini_client.generate_response(model, request)

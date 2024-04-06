@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 import typing
 from io import BytesIO
@@ -137,24 +138,6 @@ def get_gemini_playground_cache_dir() -> Path:
     return cache_dir
 
 
-def create_image_thumbnail(
-        image_path: typing.Union[str, Path], thumbnail_size: tuple = (128, 128)
-) -> PILImageType:
-    """
-    Create a thumbnail for an image
-    :param image: The image
-    :param thumbnail_size: The size of the thumbnail
-    :return: The thumbnail
-    """
-    pil_image = PILImage.open(str(image_path))
-    pil_image.thumbnail(thumbnail_size)
-    pil_image = pil_image.convert("RGB")
-    thumbnail_bytes = BytesIO()
-    pil_image.save(thumbnail_bytes, format="JPEG")
-    thumbnail_bytes.seek(0)
-    return PILImage.open(thumbnail_bytes)
-
-
 def get_code_files_in_dir(
         root_dir: typing.Union[str, Path], files_extensions=None, exclude_dirs=None
 ) -> list:
@@ -269,7 +252,7 @@ def extract_video_frames(
     """
     output_dir = Path(output_dir)
     video_path = Path(video_path)
-    vidcap = cv2.VideoCapture(video_path.as_posix())
+    vidcap = cv2.VideoCapture(str(video_path))
     fps = int(vidcap.get(cv2.CAP_PROP_FPS))
     duration = vidcap.get(cv2.CAP_PROP_FRAME_COUNT) / fps
     video_file_name = video_path.stem
@@ -292,7 +275,7 @@ def extract_video_frames(
                 )
                 frame_image_path = output_dir.joinpath(frame_image_filename)
                 frames_files.append(Path(frame_image_path))
-                cv2.imwrite(frame_image_path.as_posix(), frame)
+                cv2.imwrite(str(frame_image_path), frame)
                 pbar.update(1)
             count += 1
     vidcap.release()
@@ -306,7 +289,7 @@ def extract_video_frame_count(video_path: typing.Union[str, Path]) -> int:
     :return: The number of frames in the video
     """
     video_path = Path(video_path)
-    vidcap = cv2.VideoCapture(video_path.as_posix())
+    vidcap = cv2.VideoCapture(str(video_path))
     num_frames = vidcap.get(cv2.CAP_PROP_FRAME_COUNT)
     vidcap.release()
     return int(num_frames)
@@ -319,7 +302,7 @@ def extract_video_duration(video_path: typing.Union[str, Path]) -> int:
     :return: The duration of the video in seconds
     """
     video_path = Path(video_path)
-    vidcap = cv2.VideoCapture(video_path.as_posix())
+    vidcap = cv2.VideoCapture(str(video_path))
     fps = int(vidcap.get(cv2.CAP_PROP_FPS))
     duration = vidcap.get(cv2.CAP_PROP_FRAME_COUNT) / fps
     vidcap.release()
@@ -335,7 +318,7 @@ def extract_video_frame_at_t(
     :return:
     """
     video_path = Path(video_path)
-    vidcap = cv2.VideoCapture(video_path.as_posix())
+    vidcap = cv2.VideoCapture(str(video_path))
     fps = int(vidcap.get(cv2.CAP_PROP_FPS))
     frame_number = int(fps * timestamp_seconds)
     vidcap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
@@ -391,3 +374,64 @@ def check_github_repo_branch_exists(remote_url, branch_name):
     # Check if the specified branch exists
     branch_exists = any(branch_name in branch for branch in branches)
     return branch_exists
+
+
+def split_and_label_prompt_parts_from_string(input_string):
+    # This regex looks for substrings that are either inside brackets (considered files) or are not brackets and commas (considered text).
+    pattern = r'\[([^\]]+)\]|([^[\]]+)'
+
+    # Find all matches of the pattern in the input string
+    matches = re.findall(pattern, input_string)
+
+    # Initialize an empty list to store the result
+    result = []
+
+    for match in matches:
+        file, text = match  # Unpack the tuple
+
+        # Check if the match is considered a file (inside brackets) or text (outside brackets)
+        if file:
+            result.append({"type": "multimodal", "value": file.strip()})
+        elif text.strip():  # Ensure text is not just whitespace
+            result.append({"type": "text", "value": text.strip()})
+
+    return result
+
+
+def create_video_thumbnail(
+        video_path: typing.Union[str, Path], thumbnail_size: tuple = (128, 128), t=0
+) -> PILImageType:
+    """
+    Create a thumbnail for a video
+    :param t: The timestamp in seconds
+    :param video_path: The path to the video
+    :param thumbnail_size: The size of the thumbnail
+    :return: The thumbnail
+    """
+    # Extract the first frame from the video
+    first_frame = extract_video_frame_at_t(video_path, t)
+    # Create a thumbnail from the first frame
+    first_frame.thumbnail(thumbnail_size)
+    first_frame = first_frame.convert("RGB")
+    thumbnail_bytes = BytesIO()
+    first_frame.save(thumbnail_bytes, format="JPEG")
+    thumbnail_bytes.seek(0)
+    return PILImage.open(thumbnail_bytes)
+
+
+def create_image_thumbnail(
+        image_path: typing.Union[str, Path], thumbnail_size: tuple = (128, 128)
+) -> PILImageType:
+    """
+    Create a thumbnail for an image
+    :param image_path:
+    :param thumbnail_size: The size of the thumbnail
+    :return:
+    """
+    pil_image = get_image_from_anywhere(image_path)
+    pil_image.thumbnail(thumbnail_size)
+    if pil_image.mode == "RGBA":
+        background = PILImage.new("RGB", pil_image.size, (255, 255, 255))
+        background.paste(pil_image, mask=pil_image.split()[3])
+        pil_image = background
+    return pil_image

@@ -25,11 +25,12 @@ def chat_wit_your_code():
         parts=[
             TextPart(text="use this codebase:"),
             *repo_parts,
-            TextPart(text="Describe the `bigram.py` file."),
+            TextPart(text="Describe the `bigram.py` file, and generate some code snippets"),
         ]
     )
     request = GenerateRequest(contents=[request_parts])
     model = "models/gemini-1.5-pro-latest"
+
     gemini_client = GeminiClient()
     tokens_count = gemini_client.get_tokens_count(model, request)
     print("Tokens count: ", tokens_count)
@@ -39,6 +40,8 @@ def chat_wit_your_code():
     for candidate in response.candidates:
         for part in candidate.content.parts:
             if part.text:
+                with open("output.txt", "a") as f:
+                    f.write(part.text + "\n")
                 print(part.text)
 
 

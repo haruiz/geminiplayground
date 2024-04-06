@@ -1,5 +1,6 @@
 import logging
 
+from joblib import Memory
 from dotenv import load_dotenv, find_dotenv
 from rich.logging import RichHandler
 

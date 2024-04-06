@@ -4,6 +4,9 @@ from pydantic import BaseModel, Field
 class TextPart(BaseModel):
     text: str = Field(..., description="Text content.")
 
+    class Config:
+        populate_by_name = True
+
 
 class FilePartData(BaseModel):
     file_uri: str = Field(description="URI of the file.", alias="fileUri")

@@ -3,7 +3,7 @@ on:
   push:
     tags:
       - '*.*.*'
-
+  workflow_dispatch:
 jobs:
   test_pypi_release:
     runs-on: ubuntu-latest

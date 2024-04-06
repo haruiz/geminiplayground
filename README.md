@@ -31,7 +31,7 @@ you can:
 ### Installation
 
 ```bash
-pip install -i https://test.pypi.org/simple/ geminiplayground
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ geminiplayground
 ```
 
 ### Usage
@@ -264,10 +264,21 @@ advanced functionalities and examples.
 
 ### GUI
 
-You can also use the GUI to interact with the API. To start the GUI, run:
+You can also use the GUI to interact with Gemini.
+Remember to set the `AISTUDIO_API_KEY` environment variable with your API key. You can do so globally, pass it as an
+argument to the command, or create a `.env` file in the root of your project and set the `AISTUDIO_API_KEY` variable
+there.
+
+For running the GUI, use the following command:
 
 ```bash
-geminiplayground ui
+geminiplayground
+```
+
+or
+
+```bash
+AISTUDIO_API_KEY=your_api_key geminiplayground
 ```
 
 This will start a local server and open the GUI in your default browser.

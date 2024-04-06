@@ -108,7 +108,7 @@ class GeminiClient(metaclass=Singleton):
         if not api_key:
             api_key = os.getenv("AISTUDIO_API_KEY", None)
         if not api_key:
-            raise ValueError("API_KEY must be provided.")
+            raise ValueError("AISTUDIO_API_KEY must be provided.")
         discovery_url = f"https://generativelanguage.googleapis.com/$discovery/rest?version={version}&key={api_key}"
         discovery_docs = requests.get(discovery_url).content
         self.genai_service = googleapiclient.discovery.build_from_document(

@@ -2,7 +2,9 @@ name: Publish to PyPI
 on:
   release:
     types: [ published ]
-
+    branches:
+      - main
+    workflow_dispatch:
 jobs:
   pypi_release:
     name: Builds Using Poetry and Publishes to PyPI

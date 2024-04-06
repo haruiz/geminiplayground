@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "geminiapp"
+name = "geminiplayground"
 version = "0.1.0"
 description = ""
 authors = ["haruiz <henryruiz22@gmail.com>"]

@@ -31,7 +31,7 @@ you can:
 ### Installation
 
 ```bash
-pip install geminiplayground
+pip install -i https://test.pypi.org/simple/ geminiplayground
 ```
 
 ### Usage

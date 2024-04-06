@@ -9,7 +9,7 @@ packages = [{ include = "geminiplayground", from = "src" }]
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
 google-api-python-client = "^2.123.0"
-pillow = "^10.2.0"
+pillow = "^10.3.0"
 opencv-python = "^4.9.0.80"
 numpy = "^1.26.4"
 scipy = "^1.12.0"

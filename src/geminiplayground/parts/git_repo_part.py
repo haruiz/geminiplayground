@@ -55,7 +55,7 @@ class GitRepo(MultimodalPart):
         return cls(folder, **kwargs)
 
     @classmethod
-    def from_repo_url(cls, repo_url: str, branch: str = "main", **kwargs):
+    def from_url(cls, repo_url: str, branch: str = "main", **kwargs):
         """
         Create a GitRepo instance from a repo url
         :param repo_url: the url of the repo to create the GitRepo instance from

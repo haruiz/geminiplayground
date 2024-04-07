@@ -12,7 +12,7 @@ if __name__ == "__main__":
     video_path = "../data/transformers-explained.mp4"
     video = VideoFile(video_path, gemini_client=gemini_client)
     repo_url = "https://github.com/karpathy/ng-video-lecture"
-    codebase = GitRepo.from_repo_url(
+    codebase = GitRepo.from_url(
         repo_url,
         branch="master",
         config={

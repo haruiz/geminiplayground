@@ -99,7 +99,7 @@ async def upload_repo_handler(request: Request):
     session = SessionMaker()
     try:
         if validators.url(repo_path):
-            repo = GitRepo.from_repo_url(repo_path, branch=repo_branch)
+            repo = GitRepo.from_url(repo_path, branch=repo_branch)
         else:
             repo = GitRepo.from_folder(repo_path)
         multimodal_part_db_entry = MultimodalPartEntry(

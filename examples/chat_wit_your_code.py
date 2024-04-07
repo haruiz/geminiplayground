@@ -11,7 +11,7 @@ def chat_wit_your_code():
     :return:
     """
 
-    repo = GitRepo.from_repo_url(
+    repo = GitRepo.from_url(
         "https://github.com/karpathy/ng-video-lecture",
         branch="master",
         config={

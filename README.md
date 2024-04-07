@@ -3,7 +3,7 @@
 ![Gemini Logo](https://raw.githubusercontent.com/haruiz/geminiplayground/main/images/logo.png)
 
 Gemini-Playground provides a Python interface and a UI to interact with last Google's
-Gemini's version, `models/gemini-1.5-pro-latest`. With Gemini Playground,
+Gemini's version, `models/gemini-1.5-pro-latest`, and other variants of Gemini. With Gemini Playground,
 you can:
 
 * **Engage in conversation with your data:** Upload images, and videos using a simple API and

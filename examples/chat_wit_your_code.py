@@ -20,7 +20,6 @@ def chat_wit_your_code():
         },
     )
     repo_parts = repo.content_parts()
-
     request_parts = GenerateRequestParts(
         parts=[
             TextPart(text="use this codebase:"),

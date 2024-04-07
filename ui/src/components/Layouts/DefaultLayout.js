@@ -4,7 +4,7 @@ import {Button} from "@/components/ui/button"
 import {Tooltip, TooltipContent, TooltipTrigger,} from "@/components/ui/tooltip"
 import {usePathname, useRouter} from 'next/navigation'
 import Image from "next/image";
-import { Toaster } from "@/components/ui/toaster"
+import {Toaster} from "@/components/ui/toaster"
 
 function LeftTopNavBar() {
 
@@ -96,7 +96,7 @@ function LeftBottomNav() {
 function TopNavBar() {
     return <header className="sticky top-0 z-10 flex h-[60px] items-center gap-1 border-b bg-background px-4">
         <h1 className="text-xl font-semibold">Gemini Playground</h1>
-        <Image src="gemini-logo.svg" width={50} height={50}  priority={true} alt={"gemini logo"}/>
+        <Image src="/gemini-logo.svg" width={50} height={50} priority={true} alt={"gemini logo"}/>
     </header>;
 }
 
@@ -112,7 +112,7 @@ export default function DefaultLayout({children}) {
             <main className="m-2 p-2 rounded">
                 {children}
             </main>
-            <Toaster />
+            <Toaster/>
         </div>
-)
+    )
 }

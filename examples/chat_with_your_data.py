@@ -9,10 +9,8 @@ load_dotenv(find_dotenv())
 
 if __name__ == "__main__":
     gemini_client = GeminiClient()
-
     video_path = "../data/transformers-explained.mp4"
     video = VideoFile(video_path, gemini_client=gemini_client)
-
     repo_url = "https://github.com/karpathy/ng-video-lecture"
     codebase = GitRepo.from_repo_url(
         repo_url,
@@ -20,13 +18,14 @@ if __name__ == "__main__":
         config={
             "content": "code-files",  # "code-files" or "issues"
             "file_extensions": [".py"],
-        },
+        }
     )
     prompt = [
         "Create a blog post" "Title: Introduction to transformers",
         "based on the following video:",
         video,
-        "Also, create some code snippets from the codebase: ",
+        "Also, generate some code snippets from the following codebase, "
+        "and include them in the blog post.",
         codebase,
     ]
     model = "models/gemini-1.5-pro-latest"

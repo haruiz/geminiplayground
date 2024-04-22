@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "geminiplayground"
-version = "0.5.0"
+version = "0.6.0"
 description = ""
 authors = ["haruiz <henryruiz22@gmail.com>"]
 readme = "README.md"
@@ -23,7 +23,7 @@ alive-progress = "^3.1.5"
 pygithub = "^2.3.0"
 gitpython = "^3.1.42"
 fastapi = "^0.110.0"
-uvicorn = {extras = ["standard"], version = "^0.29.0"}
+uvicorn = { extras = ["standard"], version = "^0.29.0" }
 typer = "^0.12.0"
 python-multipart = "^0.0.9"
 sqlalchemy = "^2.0.29"

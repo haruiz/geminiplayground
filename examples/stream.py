@@ -1,6 +1,9 @@
 from geminiplayground.core import GeminiClient
 
 from rich import print
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
 
 if __name__ == '__main__':
     model = "models/gemini-1.5-pro-latest"

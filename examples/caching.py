@@ -1,11 +1,19 @@
 from pathlib import Path
 
+from geminiplayground.catching import cache
 from geminiplayground.core import GeminiClient
 from geminiplayground.parts import ImageFile, VideoFile
 from rich import print
 
+from dotenv import load_dotenv, find_dotenv
 
-def test_image_file():
+load_dotenv(find_dotenv())
+
+
+def cache_image_file():
+    """
+    code snippet to cache image file
+    """
     gemini_client = GeminiClient()
     image_path = "./data/daisy.jpg"
     print(str(Path(image_path).resolve()))
@@ -19,7 +27,10 @@ def test_image_file():
         print(part)
 
 
-def test_video_file():
+def cache_video_file():
+    """
+    code snippet to cache video file
+    """
     gemini_client = GeminiClient()
     video_path = "./data/transformers-explained.mp4"
     print(str(Path(video_path).resolve()))
@@ -33,5 +44,7 @@ def test_video_file():
 
 
 if __name__ == '__main__':
-    test_image_file()
-    test_video_file()
+    # clear cache
+    cache.clear()
+    # cache_image_file()
+    # cache_video_file()

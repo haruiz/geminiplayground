@@ -3,6 +3,9 @@ from rich import print
 from geminiplayground.core import GeminiClient
 from geminiplayground.parts import ImageFile
 from geminiplayground.schemas import GenerateRequestParts, TextPart, GenerateRequest
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
 
 
 def chat_wit_your_images():

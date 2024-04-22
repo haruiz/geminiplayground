@@ -35,8 +35,6 @@ def ui(
     import uvicorn
     check_api_key()
 
-    workers = 2
-
     run_cmd = (
         f"gunicorn "
         f"geminiplayground.web.app:app "

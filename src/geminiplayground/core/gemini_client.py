@@ -64,9 +64,15 @@ class ChatSession:
     def __init__(self, client, model, history=None):
         self.client = client
         self.model = model
-        self.history = history or []
+        self.history = history
 
-    def send_message(self, user_prompt, stream=False, **kwargs):
+    def generate_response(self, user_prompt, stream=False, **kwargs):
+        """
+        Generate a response from a user prompt.
+        :param user_prompt: The user prompt
+        :param stream: Whether to stream the response
+        :param kwargs: Additional arguments
+        """
         try:
             user_prompt = self.client.normalize_prompt(user_prompt)
             self.history.append(ChatMessage(role="user", parts=user_prompt))
@@ -225,13 +231,6 @@ class GeminiClient(metaclass=Singleton):
         :return:
         """
         uploaded_files = []
-        # with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        #     tasks = [executor.submit(self.upload_file, file) for file in files]
-        #     with tqdm(total=len(tasks), desc="Uploading files") as progress:
-        #         for future in as_completed(tasks):
-        #             result = future.result()  # You can use the result here if needed
-        #             uploaded_files.append(result)
-        #             progress.update(1)  # Update the progress bar by one
         for file in tqdm(files, desc="Uploading files"):
             sleep(timeout)
             uploaded_files.append(self.upload_file(file))
@@ -247,12 +246,6 @@ class GeminiClient(metaclass=Singleton):
         """
 
         files = [file.name if isinstance(file, FileInfo) else file for file in files]
-        # with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        #     tasks = [executor.submit(self.delete_file, file) for file in files]
-        #     with tqdm(total=len(tasks), desc="Removing files") as progress:
-        #         for future in as_completed(tasks):
-        #             future.result()
-        #             progress.update(1)
         for file in tqdm(files, desc="Removing files"):
             sleep(timeout)
             self.delete_file(file)
@@ -265,7 +258,7 @@ class GeminiClient(metaclass=Singleton):
         :param prompt: The prompt
         :return: A GenerateRequest object.
         """
-        from geminiplayground.schemas import TextPart
+        from geminiplayground.schemas import TextPart, FilePart
         from geminiplayground.parts import MultimodalPart
 
         parts = []
@@ -278,6 +271,8 @@ class GeminiClient(metaclass=Singleton):
                 parts.append(TextPart(text="\n" + part + "\n"))
             elif isinstance(part, MultimodalPart):
                 parts.extend(part.content_parts())
+            elif isinstance(part, (TextPart, FilePart)):
+                parts.append(part)
         return parts
 
     @handle_exceptions
@@ -333,6 +328,9 @@ class GeminiClient(metaclass=Singleton):
         except pydantic.ValidationError as e:
             logger.error(f"Error parsing response: {e}")
             raise e
+        except Exception as e:
+            logger.error(f"Error generating response: {e}")
+            raise e
 
     @handle_exceptions
     def stream(self, model: str, prompt: GenerateRequest | list | str | dict, **kwargs):
@@ -346,11 +344,10 @@ class GeminiClient(metaclass=Singleton):
         """
         generate_request = self.__mk_generative_request(prompt, **kwargs)
         timeout = kwargs.get("timeout", 0.0)
-        # TODO - Implement json to sse
         response = (
             self.genai_service.models()
             .streamGenerateContent(
-                model=model, body=generate_request.dict(exclude_none=True, by_alias=True), alt="json"
+                model=model, body=generate_request.dict(exclude_none=True, by_alias=True)  # , alt="json"
             ).
             execute()
         )
@@ -362,7 +359,8 @@ class GeminiClient(metaclass=Singleton):
 
     def __mk_generative_request(self, prompt, **kwargs):
         assert isinstance(prompt,
-                          (GenerateRequest, ChatHistory, list, str)), "Prompt must be a GenerateRequest, list, or str."
+                          (GenerateRequest, ChatHistory, list,
+                           str)), "Prompt must be a GenerateRequest, ChatHistory, list, or str"
         if isinstance(prompt, GenerateRequest):
             generate_request = prompt
         elif isinstance(prompt, ChatHistory):

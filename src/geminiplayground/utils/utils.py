@@ -2,15 +2,20 @@ import os
 import re
 import subprocess
 import typing
+import urllib
 from io import BytesIO
 from pathlib import Path
 from urllib.parse import urlparse
 
+import os
+import shutil
+import tempfile
+from contextlib import contextmanager
+import urllib.request
 import git
-import requests
 from PIL import Image as PILImage
 from PIL.Image import Image as PILImageType
-
+from urllib.error import HTTPError
 import cv2
 import math
 from tqdm import tqdm
@@ -86,10 +91,22 @@ def get_image_from_url(url: str) -> PILImageType:
     Create an image from url and return it
     """
     http_uri = normalize_url(url)
-    response = requests.get(http_uri)
-    image_bytes = BytesIO(response.content)
-    image_obj = PILImage.open(image_bytes)
-    return image_obj
+    try:
+        assert validators.url(http_uri), "invalid url"
+        resp = urllib.request.urlopen(url, timeout=30)
+        image = PILImage.open(resp)
+        return image
+    except HTTPError as err:
+        if err.strerror == 404:
+            raise Exception("Image not found")
+        elif err.code in [403, 406]:
+            raise Exception("Forbidden image, it can not be reached")
+        else:
+            raise
+
+    # image_bytes = BytesIO(response.content)
+    # image_obj = PILImage.open(image_bytes)
+    # return image_obj
 
 
 def get_image_from_path(path: str) -> PILImageType:
@@ -210,10 +227,25 @@ def get_repo_name_from_url(url: str) -> str:
     return url[last_slash_index + 1: last_suffix_index]
 
 
-import os
-import shutil
-import tempfile
-from contextlib import contextmanager
+def get_repo_name_from_path(path: str) -> str:
+    """
+    Get and return the repo name from a valid github url
+    :rtype: str
+    """
+    assert folder_contains_git_repo(path), "Invalid git repo path"
+    return Path(path).name
+
+
+def get_repo_name(path: str) -> str:
+    """
+    Get the repo name from a path
+    :param path:
+    :return:
+    """
+    if validators.url(path):
+        return get_repo_name_from_url(path)
+    else:
+        return get_repo_name_from_path(path)
 
 
 @contextmanager
@@ -372,8 +404,7 @@ def check_github_repo_branch_exists(remote_url, branch_name):
     branches = get_github_repo_available_branches(remote_url)
 
     # Check if the specified branch exists
-    branch_exists = any(branch_name in branch for branch in branches)
-    return branch_exists
+    return branch_name in branches
 
 
 def split_and_label_prompt_parts_from_string(input_string):

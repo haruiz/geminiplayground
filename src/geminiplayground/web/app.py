@@ -8,8 +8,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from .api import api
-from .db.orm_utils import create_db, drop_db
 from .ui import ui
+from .db.session_manager import sessionmanager
 from .db.models import *
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -27,8 +27,7 @@ async def lifespan(app: FastAPI):
     """
 
     print("ui is starting")
-    # drop_db()
-    create_db()
+    await sessionmanager.init()
     yield
     print("ui is shutting down")
 

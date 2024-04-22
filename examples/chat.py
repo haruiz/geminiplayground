@@ -21,7 +21,7 @@ if __name__ == '__main__':
                 break
             try:
                 sleep(0.5)
-                response = chat.send_message(user_input, stream=True, timeout=0.5)
+                response = chat.generate_response(user_input, stream=True, timeout=0.5)
                 for candidate in response:
                     print(candidate.text)
             except Exception as e:

@@ -1,7 +1,9 @@
 from geminiplayground.core import GeminiClient
 from geminiplayground.parts import VideoFile, ImageFile
 from geminiplayground.schemas import HarmCategory, HarmBlockThreshold
+from dotenv import load_dotenv, find_dotenv
 
+load_dotenv(find_dotenv())
 if __name__ == "__main__":
 
     gemini_client = GeminiClient()

@@ -12,11 +12,11 @@ import {forwardRef, useImperativeHandle, useRef} from "react";
 import FileUploadForm from "@/app/mydata/FileUploadForm";
 import CodeRepoForm from "@/app/mydata/CodeRepoForm";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import {Folder, FolderCog2Icon, FolderIcon, FoldersIcon, MoreHorizontal} from "lucide-react";
+import {MoreHorizontal} from "lucide-react";
 import {axiosInstance} from "@/app/axios";
 import DataTable from "@/components/DataTable";
 import ConfirmDialog from "@/components/ConfirmDialog";
-
+import {Badge} from "@/components/ui/badge"
 
 const FilesTable = forwardRef(function FilesTable({...rest}, ref) {
 
@@ -25,6 +25,7 @@ const FilesTable = forwardRef(function FilesTable({...rest}, ref) {
 
     const {data, isLoading, refetch} = useQuery({
         queryKey: ["parts"],
+        refetchInterval: 10000,
         queryFn: async () => {
             const response = await axiosInstance.get("/parts")
             return response.data
@@ -36,7 +37,7 @@ const FilesTable = forwardRef(function FilesTable({...rest}, ref) {
             await axiosInstance.delete(`/parts/${name}`);
         }
     })
-    const refresh = async() => {
+    const refresh = async () => {
         await queryClient.invalidateQueries({queryKey: ["parts"]});
         await refetch();
     }
@@ -55,6 +56,15 @@ const FilesTable = forwardRef(function FilesTable({...rest}, ref) {
             accessorKey: "type",
         },
         {
+            header: "Status",
+            cell: ({row}) => {
+                const status = row.original.status
+                return (
+                    <Badge variant={status === "ready" ? "secondary" : "destructive"}>{status}</Badge>
+                )
+            }
+        },
+        {
             header: "Actions",
             cell: ({row}) => {
                 const data = row.original
@@ -71,12 +81,12 @@ const FilesTable = forwardRef(function FilesTable({...rest}, ref) {
                             <DropdownMenuItem
                                 onClick={() => {
                                     const dialog = confirmDialogRef.current
-                                    if(dialog){
+                                    if (dialog) {
                                         dialog.open(
                                             "Delete",
                                             "Are you sure you want to delete this file?",
-                                            async(result)=> {
-                                                if(result){
+                                            async (result) => {
+                                                if (result) {
                                                     await deleteFileMutation.mutateAsync(data.name);
                                                     await queryClient.refetchQueries(["parts"])
                                                 }
@@ -94,20 +104,20 @@ const FilesTable = forwardRef(function FilesTable({...rest}, ref) {
             }
         }
     ];
-    const filesTableData = data?data.map((item) => {
+    const filesTableData = data ? data.map((item) => {
         return {
             name: item.name,
-            type: item.content_type
+            type: item.content_type,
+            status: item.status
         }
-    }):[]
+    }) : []
     return (
         <>
             <ConfirmDialog ref={confirmDialogRef}/>
-             <DataTable columns={filesTableColumns} data={filesTableData} className="w-full" />
+            <DataTable columns={filesTableColumns} data={filesTableData} className="w-full"/>
         </>
     );
 });
-
 
 
 export default function FilesPage() {
@@ -119,14 +129,14 @@ export default function FilesPage() {
 
     const newFileHandler = () => {
         const form = uploadFileFormRef.current;
-        if(form){
+        if (form) {
             form.reset();
             form.open();
         }
     }
     const newCodeRepoHandler = () => {
         const form = codeRepoFormRef.current;
-        if(form){
+        if (form) {
             form.reset();
             form.open();
         }
@@ -152,12 +162,12 @@ export default function FilesPage() {
                     </DropdownMenuContent>
                 </DropdownMenu>
                 <div className="rounded-md border m-3">
-                    <FilesTable  ref={fileTableRef} />
+                    <FilesTable ref={fileTableRef}/>
                 </div>
             </main>
 
-            <FileUploadForm ref={uploadFileFormRef} />
-            <CodeRepoForm ref={codeRepoFormRef} />
+            <FileUploadForm ref={uploadFileFormRef}/>
+            <CodeRepoForm ref={codeRepoFormRef}/>
         </>
     );
 }

@@ -6,8 +6,28 @@ from sqlalchemy import select, insert
 from geminiplayground.web.db.session_manager import sessionmanager, get_db_session
 import asyncio
 from dotenv import load_dotenv, find_dotenv
+from .registry import mapper_registry as reg
 
 load_dotenv(find_dotenv())
+
+
+@reg.mapped_as_dataclass
+class User:
+    """
+    User model.
+    """
+
+    __tablename__ = "user"
+
+    id: Mapped[int] = mapped_column(init=False, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column()
+    email: Mapped[str] = mapped_column()
+
+    def as_dict(self):
+        return {c.name: str(getattr(self, c.name)) for c in self.__table__.columns}
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__}({self.id}, {self.name})>"
 
 
 async def run():

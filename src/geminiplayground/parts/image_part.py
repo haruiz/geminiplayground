@@ -19,6 +19,7 @@ def upload_image(image_path: typing.Union[str, Path], gemini_client: GeminiClien
     """
     pil_image = get_image_from_anywhere(image_path)
     image_filename = get_file_name_from_path(image_path)
+
     with TemporaryFile(image_filename) as temp_file:
         pil_image.save(temp_file)
         upload_file = UploadFile.from_path(temp_file,
@@ -31,8 +32,6 @@ class ImageFile(MultimodalPart):
 
     def __init__(self, image_path: typing.Union[str, Path], **kwargs):
         self.image_path = image_path
-        if not Path(image_path).exists():
-            raise FileNotFoundError(f"Image file {image_path} not found")
         self.image_name = get_file_name_from_path(image_path)
         self.gemini_client = kwargs.get("gemini_client", GeminiClient())
 

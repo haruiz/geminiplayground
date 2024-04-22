@@ -272,7 +272,7 @@ there.
 For running the GUI, use the following command:
 
 ```bash
-geminiplayground
+geminiplayground ui
 ```
 
 or

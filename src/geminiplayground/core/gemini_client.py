@@ -346,7 +346,7 @@ class GeminiClient(metaclass=Singleton):
         """
         generate_request = self.__mk_generative_request(prompt, **kwargs)
         timeout = kwargs.get("timeout", 0.0)
-
+        # TODO - Implement json to sse
         response = (
             self.genai_service.models()
             .streamGenerateContent(

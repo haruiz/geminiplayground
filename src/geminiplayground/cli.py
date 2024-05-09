@@ -23,7 +23,7 @@ def check_api_key():
 
 @cli.command()
 def ui(
-        host: str = "127.0.0.1",
+        host: str = "0.0.0.0",
         port: int = 8081,
         workers: int = os.cpu_count() * 2 + 1,
         reload: Annotated[bool, typer.Option("--reload")] = True,
@@ -32,49 +32,38 @@ def ui(
     """
     Launch the web app
     """
-    import uvicorn
     check_api_key()
+    import uvicorn
 
-    run_cmd = (
-        f"gunicorn "
-        f"geminiplayground.web.app:app "
-        f"-w {workers} "
-        f"--bind {host}:{port} "
-        f"--timeout {timeout} "
-        f"-k uvicorn.workers.UvicornWorker ")
-
-    if reload:
-        run_cmd += "--reload"
-
-    os.system(run_cmd)
+    uvicorn.run(
+        "geminiplayground.web.app:app",
+        host=host,
+        port=port,
+        workers=workers,
+        reload=reload,
+    )
 
 
 @cli.command()
 def api(
-        host: str = "127.0.0.1",
+        host: str = "0.0.0.0",
         port: int = 8081,
         workers: int = os.cpu_count() * 2 + 1,
-        reload: Annotated[bool, typer.Option("--reload")] = True,
-        timeout: int = 12600,
-
+        reload: Annotated[bool, typer.Option("--reload")] = True
 ):
     """
     Launch the API
     """
+    import uvicorn
+
     check_api_key()
-
-    run_cmd = (
-        f"gunicorn "
-        f"geminiplayground.web.api:api "
-        f"-w {workers} "
-        f"--bind {host}:{port} "
-        f"--timeout {timeout} "
-        f"-k uvicorn.workers.UvicornWorker ")
-
-    if reload:
-        run_cmd += "--reload"
-
-    os.system(run_cmd)
+    uvicorn.run(
+        "geminiplayground.web.api:api",
+        host=host,
+        port=port,
+        workers=workers,
+        reload=reload,
+    )
 
 
 def run():

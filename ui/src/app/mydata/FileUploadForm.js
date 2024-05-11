@@ -9,8 +9,8 @@ import {Button} from "@/components/ui/button";
 import {z} from "zod";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {axiosInstance} from "@/app/axios";
-import { Loader2 } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
+import {Loader2} from "lucide-react"
+import {useToast} from "@/components/ui/use-toast"
 import {ToastAction} from "@/components/ui/toast";
 
 
@@ -20,7 +20,10 @@ const ALLOWED_FILE_TYPES = [
     "image/png",
     "image/webp",
     "image/jpg",
-    "video/mp4"
+    "video/mp4",
+    'audio/mpeg',
+    'audio/wav',
+    'audio/mp3',
 ];
 // Form Schema Validation
 const fileUploadFormSchema = z.object({
@@ -31,16 +34,16 @@ const fileUploadFormSchema = z.object({
             message: "File is required"
         })
         .refine((file) => {
-        return file?.size <= MAX_FILE_SIZE && ALLOWED_FILE_TYPES.includes(file?.type);
-    }, {
-        message: `The file must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB and of type ${ALLOWED_FILE_TYPES.join(", ")}`,
-    })
+            return file?.size <= MAX_FILE_SIZE && ALLOWED_FILE_TYPES.includes(file?.type);
+        }, {
+            message: `The file must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB and of type ${ALLOWED_FILE_TYPES.join(", ")}`,
+        })
 });
 const FileUploadForm = forwardRef(function FileUploadForm(props, ref) {
     const [open, setOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    const {toast} = useToast();
 
     const form = useForm({
         resolver: zodResolver(fileUploadFormSchema),
@@ -49,7 +52,7 @@ const FileUploadForm = forwardRef(function FileUploadForm(props, ref) {
         }
     });
     const mutate = useMutation({
-        mutationFn: async(data) => {
+        mutationFn: async (data) => {
             return axiosInstance.post("/uploadFile", data, {
                 headers: {
                     "Content-Type": "multipart/form-data"
@@ -58,7 +61,7 @@ const FileUploadForm = forwardRef(function FileUploadForm(props, ref) {
         }
     });
 
-    const onSubmit = async(formValues, evt) => {
+    const onSubmit = async (formValues, evt) => {
         try {
             evt.preventDefault();
             setIsSubmitting(true);
@@ -67,8 +70,7 @@ const FileUploadForm = forwardRef(function FileUploadForm(props, ref) {
             const result = await mutate.mutateAsync(formData);
             await queryClient.refetchQueries(["parts"]);
 
-        }
-        catch (error) {
+        } catch (error) {
             console.error("Error uploading file", error);
             const errorMessage = error.response?.data?.detail || error.message;
             toast({
@@ -77,8 +79,7 @@ const FileUploadForm = forwardRef(function FileUploadForm(props, ref) {
                 description: `An error occurred while uploading the file. ${errorMessage}`,
                 action: <ToastAction altText="Try again">Close</ToastAction>,
             })
-        }
-        finally {
+        } finally {
             form.reset();
             setOpen(false);
             setIsSubmitting(false);
@@ -127,7 +128,7 @@ const FileUploadForm = forwardRef(function FileUploadForm(props, ref) {
                             />
                             {isSubmitting ? (
                                 <Button type="submit" disabled>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
                                     Please wait...
                                 </Button>
                             ) : (

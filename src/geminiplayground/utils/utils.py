@@ -468,8 +468,13 @@ def create_image_thumbnail(
         pil_image = background
     return pil_image
 
+
 def get_expire_time():
+    """
+    Get the expiration time for the cache
+    """
     now = datetime.now()
     future = now + timedelta(days=1)
     delta_t = future - now
     delta_t = delta_t.total_seconds()
+    return delta_t

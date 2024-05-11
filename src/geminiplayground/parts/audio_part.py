@@ -12,7 +12,6 @@ from geminiplayground.utils import get_expire_time
 from pathlib import Path
 from urllib.error import HTTPError
 
-
 logger = logging.getLogger("rich")
 
 
@@ -65,6 +64,9 @@ def upload_audio(
 
 
 class AudioFile(MultimodalPart):
+    """
+    Audio file part implementation
+    """
 
     def __init__(self, audio_path: typing.Union[str, Path], **kwargs):
         self.audio_path = audio_path

@@ -29,6 +29,9 @@ def upload_image(image_path: typing.Union[str, Path], gemini_client: GeminiClien
 
 
 class ImageFile(MultimodalPart):
+    """
+    Image File Part implementation
+    """
 
     def __init__(self, image_path: typing.Union[str, Path], **kwargs):
         self.image_path = image_path
@@ -44,10 +47,7 @@ class ImageFile(MultimodalPart):
             cached_file = cache.get(self.image_name)
             return [cached_file]
 
-        now = datetime.now()
-        future = now + timedelta(days=1)
-        delta_t = future - now
-        delta_t = delta_t.total_seconds()
+        delta_t = get_expire_time()
         uploaded_file = upload_image(self.image_path, self.gemini_client)
         cache.set(self.image_name, uploaded_file, expire=delta_t)
         return [uploaded_file]

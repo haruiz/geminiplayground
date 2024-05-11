@@ -4,6 +4,7 @@ from geminiplayground.core import GeminiClient
 from geminiplayground.parts import AudioFile
 from geminiplayground.schemas import GenerateRequestParts, TextPart, GenerateRequest
 from dotenv import load_dotenv, find_dotenv
+from rich import print
 
 load_dotenv(find_dotenv())
 
@@ -16,17 +17,18 @@ def chat_wit_your_audios():
     gemini_client = GeminiClient()
     model = "models/gemini-1.5-pro-latest"
 
-    audio_file_path = "https://d3ctxlq1ktw2nl.cloudfront.net/staging/2024-3-20/375002170-44100-2-2bb0f483b9938.m4a"
+    audio_file_path = "<your audio file>.mp3"
     audio_file = AudioFile(audio_file_path, gemini_client=gemini_client)
-    audio_parts = audio_file.content_parts()
-    audio_files = audio_parts.files
+    # audio_file.delete()
+    audio_files = audio_file.files
     print("Audio files: ", audio_files)
 
+    audio_parts = audio_file.content_parts()
     request_parts = GenerateRequestParts(
         parts=[
-            TextPart(text="You can listen to this audio?:"),
+            TextPart(text="Listen this audio:"),
             *audio_parts,
-            TextPart(text="Describe what you heard:"),
+            TextPart(text="Describe what you heard"),
         ]
     )
     request = GenerateRequest(

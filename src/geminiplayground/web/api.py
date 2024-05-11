@@ -114,7 +114,6 @@ async def get_tags_handler(request: Request, db_session: DBSessionDep):
     request_url = request.url._url
     base_url = request_url.split("/api")[0]
     files_url = f"{base_url}/files"
-
     query = select(MultimodalPartDBModel).where(MultimodalPartDBModel.status == EntryStatus.READY)
     result = await db_session.execute(query)
     parts = result.scalars().all()
@@ -122,6 +121,8 @@ async def get_tags_handler(request: Request, db_session: DBSessionDep):
     for part in parts:
         if part.content_type == "repo":
             thumbnail_url = f"{files_url}/thumbnail_github.png"
+        elif part.content_type == "audio":
+            thumbnail_url = f"{files_url}/thumbnail_audio.png"
         else:
             thumbnail_url = f"{files_url}/thumbnail_{Path(part.name).stem}.jpg"
         tags.append({
@@ -177,7 +178,6 @@ async def upload_repo_handler(request: Request, background_tasks: BackgroundTask
             assert folder_contains_git_repo(repo_path), f"Invalid repository path: {repo_path}"
         else:
             raise Exception(f"Invalid repository path: {repo_path}")
-
         repo_name = get_repo_name(repo_path)
         new_part = MultimodalPartDBModel(
             name=repo_name,
@@ -194,40 +194,52 @@ async def upload_repo_handler(request: Request, background_tasks: BackgroundTask
 
 async def upload_file_task(file_path: Path, content_type: str):
     """
-    Upload a file
+    Upload a file asynchronously with optimized session handling and thumbnail generation.
     """
     try:
         async for session in get_db_session():
-            file_name = file_path.name
-            query = select(MultimodalPartDBModel).filter(MultimodalPartDBModel.name == file_name)
-            result = await session.execute(query)
-            part = result.scalars().first()
-
-            try:
-                public_files_dir = Path(os.environ["FILES_DIR"])
-                if content_type == "image":
-                    thumbnail_img = create_image_thumbnail(file_path, THUMBNAIL_SIZE)
-                elif content_type == "video":
-                    thumbnail_img = create_video_thumbnail(file_path, THUMBNAIL_SIZE)
-                else:
-                    raise Exception(f"Unsupported content type: {content_type}")
-
-                part_thumbnail_path = Path(public_files_dir).joinpath(f"thumbnail_{Path(file_name).stem}.jpg")
-                thumbnail_img.save(part_thumbnail_path)
-
-                multimodal_part = MultimodalPartFactory.from_path(file_path)
-                await run_in_threadpool(lambda: multimodal_part.upload())
-
-                part.status = EntryStatus.READY
-            except Exception as e:
-                logger.error(e)
-                part.status = EntryStatus.ERROR
-                error_message = e.reason if hasattr(e, "reason") else e.message if hasattr(e, "message") else str(e)
-                part.status_message = error_message
-            finally:
-                await session.commit()
+            await upload_file(session, file_path, content_type)
     except Exception as e:
-        logger.error(e)
+        logger.error(f"Failed to process file {file_path}: {str(e)}")
+
+
+async def upload_file(session: AsyncSession, file_path: Path, content_type: str):
+    """
+    Upload a file handler
+    @param session: The database session
+    @param file_path: The file path
+    @param content_type: The content type
+    @return:
+    """
+    file_name = file_path.name
+    query = select(MultimodalPartDBModel).filter(MultimodalPartDBModel.name == file_name)
+    result = await session.execute(query)
+    part = result.scalars().first()
+    if part is None:
+        logger.error("No database entry found for the file.")
+        return
+
+    try:
+        if content_type in ["image", "video"]:
+            thumbnail_func = create_image_thumbnail if content_type == "image" else create_video_thumbnail
+            thumbnail_img = thumbnail_func(file_path, THUMBNAIL_SIZE)
+            if thumbnail_img:
+                files_dir = Path(os.environ["FILES_DIR"])
+                thumbnail_path = files_dir / f"thumbnail_{file_path.stem}.jpg"
+                thumbnail_img.save(thumbnail_path)
+
+        multimodal_part = MultimodalPartFactory.from_path(file_path)
+        multimodal_part.clear_cache()
+        await run_in_threadpool(multimodal_part.upload)
+        logger.info(f"Uploaded file {file_path}")
+        part.status = EntryStatus.READY
+    except Exception as e:
+        logger.error(f"Error processing file {file_path}: {str(e)}")
+        part.status = EntryStatus.ERROR
+        error_message = getattr(e, 'reason', getattr(e, 'message', str(e)))
+        part.status_message = error_message
+    finally:
+        await session.commit()
 
 
 @api.post("/uploadFile")
@@ -241,15 +253,16 @@ async def upload_file_handler(request: Request, background_tasks: BackgroundTask
     """
     try:
         mime_type = upload_file.content_type
-        supported_content_types = ["image/png", "image/jpeg", "image/jpg", "video/mp4"]
+        supported_content_types = ["image/png", "image/jpeg", "image/jpg", "video/mp4", "audio/mpeg", "audio/mp3"]
         if mime_type not in supported_content_types:
             return JSONResponse(content={"error": f"Unsupported content type: {mime_type}"})
-
         content_type = {
             "image/png": "image",
             "image/jpeg": "image",
             "image/jpg": "image",
             "video/mp4": "video",
+            "audio/mpeg": "audio",
+            "audio/mp3": "audio"
         }[mime_type]
 
         file_name = upload_file.filename
@@ -259,16 +272,13 @@ async def upload_file_handler(request: Request, background_tasks: BackgroundTask
         with open(file_path, "wb") as file:
             file_bytes = await upload_file.read()
             file.write(file_bytes)
-
         new_part = MultimodalPartDBModel(
             name=file_name,
             content_type=content_type
         )
         db_session.add(new_part)
         await db_session.commit()
-
         background_tasks.add_task(upload_file_task, file_path, content_type)
-
         return JSONResponse(content={"content": "File uploaded"})
     except Exception as e:
         logger.error(e)

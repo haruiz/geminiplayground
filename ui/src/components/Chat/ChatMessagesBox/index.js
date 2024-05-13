@@ -78,17 +78,8 @@ function ModelMessage({message: {content, moment, error, loading = false}}) {
                 <p className="text-xs text-muted-foreground">{moment}</p>
             </div>
             <div>
-                <Button variant="ghost">
+                <Button variant="ghost" onClick={() => navigator.clipboard.writeText(content)}>
                     <ClipboardCopy size="15"/>
-                </Button>
-                <Button variant="ghost">
-                    <RefreshCcw size="15"/>
-                </Button>
-                <Button variant="ghost">
-                    <ThumbsUp size="15"/>
-                </Button>
-                <Button variant="ghost">
-                    <ThumbsDown size="15"/>
                 </Button>
             </div>
         </div>

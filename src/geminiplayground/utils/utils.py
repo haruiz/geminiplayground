@@ -20,6 +20,7 @@ import cv2
 import math
 from tqdm import tqdm
 import validators
+from datetime import datetime, timedelta
 
 
 def rm_tree(pth: typing.Union[str, Path]):
@@ -466,3 +467,14 @@ def create_image_thumbnail(
         background.paste(pil_image, mask=pil_image.split()[3])
         pil_image = background
     return pil_image
+
+
+def get_expire_time():
+    """
+    Get the expiration time for the cache
+    """
+    now = datetime.now()
+    future = now + timedelta(days=1)
+    delta_t = future - now
+    delta_t = delta_t.total_seconds()
+    return delta_t

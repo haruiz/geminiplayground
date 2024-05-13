@@ -23,7 +23,7 @@ def check_api_key():
 
 @cli.command()
 def ui(
-        host: str = "0.0.0.0",
+        host: str = "localhost",
         port: int = 8081,
         workers: int = os.cpu_count() * 2 + 1,
         reload: Annotated[bool, typer.Option("--reload")] = True,
@@ -33,6 +33,7 @@ def ui(
     Launch the web app
     """
     check_api_key()
+
     import uvicorn
 
     uvicorn.run(
@@ -46,17 +47,19 @@ def ui(
 
 @cli.command()
 def api(
-        host: str = "0.0.0.0",
+        host: str = "localhost",
         port: int = 8081,
         workers: int = os.cpu_count() * 2 + 1,
         reload: Annotated[bool, typer.Option("--reload")] = True
+
 ):
     """
     Launch the API
     """
+    check_api_key()
+
     import uvicorn
 
-    check_api_key()
     uvicorn.run(
         "geminiplayground.web.api:api",
         host=host,

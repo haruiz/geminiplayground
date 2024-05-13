@@ -4,6 +4,7 @@ from pathlib import Path
 
 from .image_part import ImageFile
 from .video_part import VideoFile
+from .audio_part import AudioFile
 
 
 class MultimodalPartFactory:
@@ -23,7 +24,9 @@ class MultimodalPartFactory:
         if path.is_file():
             mime_type = mimetypes.guess_type(path.as_posix())[0]
             if mime_type.startswith("image"):
-                return ImageFile(image_path=path, **kwargs)
-            elif mime_type.startswith("video"):
-                return VideoFile(video_path=path, **kwargs)
+                return ImageFile(path, **kwargs)
+            if mime_type.startswith("video"):
+                return VideoFile(path, **kwargs)
+            if mime_type.startswith("audio"):
+                return AudioFile(path, **kwargs)
         raise ValueError(f"Unsupported file type: {path}")

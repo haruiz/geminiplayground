@@ -37,7 +37,7 @@ def upload_video(video_path: typing.Union[str, Path], gemini_client: GeminiClien
 
 class VideoFile(MultimodalPart):
     """
-    Extract frames from a video and upload them to Gemini
+    Video part implementation
     """
 
     def __init__(self, video_path: typing.Union[str, Path], **kwargs):
@@ -59,10 +59,7 @@ class VideoFile(MultimodalPart):
         if cache.get(self.video_name):
             return cache.get(self.video_name)
 
-        now = datetime.now()
-        future = now + timedelta(days=1)
-        delta_t = future - now
-        delta_t = delta_t.total_seconds()
+        delta_t = get_expire_time()
         uploaded_files = upload_video(self.video_path, self.gemini_client)
         cache.set(self.video_name, uploaded_files, expire=delta_t)
         return uploaded_files

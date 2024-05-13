@@ -6,9 +6,7 @@ import "./styles.css";
 import Tagify from "@yaireo/tagify";
 
 
-const noop = _ => _
-
-const isSameDeep = (a,b) => {
+const isSameDeep = (a, b) => {
     const trans = x => typeof x == 'string' ? x : JSON.stringify(x)
     return trans(a) === trans(b)
 }
@@ -53,7 +51,7 @@ function suggestionItemTemplate(tagData) {
 }
 
 
-const TagsInput = forwardRef(function TagsInput({settings, whitelist, loading, readOnly,defaultValue,...rest}, ref) {
+const TagsInput = forwardRef(function TagsInput({settings, whitelist, loading, readOnly, defaultValue, ...rest}, ref) {
 
     const inputElmRef = useRef()
     const tagifyRef = useRef()
@@ -99,7 +97,6 @@ const TagsInput = forwardRef(function TagsInput({settings, whitelist, loading, r
         }
 
     }, [defaultValue, loading, whitelist]);
-
 
 
     useEffect(() => {

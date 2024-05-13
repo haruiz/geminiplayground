@@ -347,7 +347,7 @@ class GeminiClient(metaclass=Singleton):
         response = (
             self.genai_service.models()
             .streamGenerateContent(
-                model=model, body=generate_request.dict(exclude_none=True, by_alias=True)  # , alt="json"
+                model=model, body=generate_request.dict(exclude_none=True, by_alias=True), alt="json"
             ).
             execute()
         )

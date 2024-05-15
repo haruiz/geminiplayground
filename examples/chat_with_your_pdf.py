@@ -22,7 +22,8 @@ def chat_wit_your_pdf():
     pdf_text = pdf_file.files
     print("pdf text: ", pdf_text)
 
-    pdf_parts = pdf_text.content_parts()
+    pdf_parts = pdf_file.content_parts()
+    print("pdf parts: ", pdf_parts)
     request_parts = GenerateRequestParts(
         parts=[
             TextPart(text="Please create a summary of the pdf file:"),

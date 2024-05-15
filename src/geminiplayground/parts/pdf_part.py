@@ -2,6 +2,7 @@ import logging
 import typing
 import validators
 import urllib.request
+import ssl
 from geminiplayground.catching import cache
 from geminiplayground.core.gemini_client import GeminiClient
 from geminiplayground.schemas import TextPart
@@ -13,6 +14,8 @@ from pathlib import Path
 from urllib.error import HTTPError
 from PyPDF2 import PdfReader
 from typing import List
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 logger = logging.getLogger("rich")

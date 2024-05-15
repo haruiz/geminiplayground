@@ -22,6 +22,7 @@ def get_pdf_from_url(url: str) -> str:
     """
     Create a pdf from url and return it
     """
+    logging.info(f"getting pdf from url: {url}")
     http_uri = normalize_url(url)
     try:
         assert validators.url(http_uri), "invalid url"
@@ -41,6 +42,7 @@ def get_pdf_from_anywhere(uri_or_path: typing.Union[str, Path]) -> str:
     """
     read a pdf from an url or local file and return it
     """
+    logging.info(f"getting pdf from anywhere: {uri_or_path}")
     uri_or_path = str(uri_or_path)
     if validators.url(uri_or_path):
         return get_pdf_from_url(uri_or_path)

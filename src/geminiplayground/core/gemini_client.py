@@ -5,10 +5,9 @@ import typing
 from functools import wraps
 from time import sleep
 
-import googleapiclient
+import googleapiclient.discovery
 import pydantic
 import requests
-from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from rich.console import Console
 from rich.table import Table
@@ -39,11 +38,14 @@ def handle_exceptions(func):
 
     @wraps(func)
     def decorator(*args, **kwargs):
+        """
+        Decorator to handle exceptions.
+        """
         try:
             return func(*args, **kwargs)
         except HttpError as e:
             if e.resp.status == 404 or e.resp.status == 403:
-                logger.error(f"Resource not found, or access denied.")
+                logger.error("Resource not found, or access denied.")
             elif e.resp.status == 429:
                 logger.error(
                     "Rate limit exceeded. Please wait a few minutes before trying again."
@@ -61,6 +63,10 @@ def handle_exceptions(func):
 
 
 class ChatSession:
+    """
+    A chat session.
+    """
+
     def __init__(self, client, model, history=None):
         self.client = client
         self.model = model
@@ -96,6 +102,9 @@ class ChatSession:
             raise e
 
     def close(self):
+        """
+        Close the chat session.
+        """
         self.history = []
 
     def __enter__(self):

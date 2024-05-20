@@ -10,6 +10,7 @@ from fastapi.templating import Jinja2Templates
 from .api import api
 from .ui import ui
 from .db.session_manager import sessionmanager
+
 from .db.models import *
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -25,7 +26,6 @@ async def lifespan(app: FastAPI):
     Api life span
     :return:
     """
-
     print("ui is starting")
     await sessionmanager.init()
     yield

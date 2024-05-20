@@ -19,7 +19,7 @@ def chat_wit_your_video():
     video_file_path = "./../data/transformers-explained.mp4"
     video_file = VideoFile(video_file_path, gemini_client=gemini_client)
     video_parts = video_file.content_parts()
-    video_files = video_file.files[-4:]
+
     for part in video_parts[:5]:
         print(part)
 

@@ -4,3 +4,13 @@ from .multimodal_part import MultimodalPart
 from .video_part import VideoFile
 from .audio_part import AudioFile
 from .multimodal_part_factory import MultimodalPartFactory
+
+__all__ = [
+    "GitRepo",
+    "GitRepoBranchNotFoundException",
+    "MultimodalPart",
+    "VideoFile",
+    "ImageFile",
+    "AudioFile",
+    "MultimodalPartFactory"
+]

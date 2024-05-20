@@ -7,7 +7,6 @@ from io import BytesIO
 from pathlib import Path
 from urllib.parse import urlparse
 
-import os
 import shutil
 import tempfile
 from contextlib import contextmanager
@@ -128,12 +127,13 @@ def get_image_from_anywhere(uri_or_path: typing.Union[str, Path]) -> PILImageTyp
         return get_image_from_path(uri_or_path)
 
 
-def get_file_name_from_path(path: str, include_extension=True):
+def get_file_name_from_path(path: typing.Union[str, Path], include_extension=True):
     """
     Get the file name from a path
     :param path:
     :return:
     """
+    path = str(path)
     if validators.url(path):
         file_path = Path(urlparse(path).path)
     else:
@@ -302,7 +302,7 @@ def extract_video_frames(
 
                 frame_count += 1
                 file_name_prefix = os.path.basename(video_file_name).replace(".", "_")
-                frame_prefix = f"_frame"
+                frame_prefix = "_frame"
                 frame_image_filename = (
                     f"{file_name_prefix}{frame_prefix}{frame_count:04d}.jpg"
                 )
@@ -347,6 +347,7 @@ def extract_video_frame_at_t(
 ) -> PILImageType:
     """
     Extract a frame at a specific timestamp
+    :param video_path: The path to the video
     :param timestamp_seconds: The timestamp in seconds
     :return:
     """
@@ -363,10 +364,10 @@ def extract_video_frame_at_t(
     return PILImage.fromarray(frame)
 
 
-def beautify_file_size(size_in_bytes: int) -> str:
+def beautify_file_size(size_in_bytes: float) -> str:
     """
     Convert size in bytes to human readable format
-    :param size: Size in bytes
+    :param size_in_bytes: The size in bytes
     :return: Human readable size
     """
     # Define the threshold for each size unit
@@ -383,6 +384,9 @@ def beautify_file_size(size_in_bytes: int) -> str:
 
 
 def get_file_size(file_path: typing.Union[str, Path]):
+    """
+    Get the size of a file in bytes
+    """
     # Use os.path.getsize() to get the file size in bytes
     size_in_bytes = os.path.getsize(file_path)
     return size_in_bytes
@@ -401,6 +405,9 @@ def get_github_repo_available_branches(remote_url):
 
 
 def check_github_repo_branch_exists(remote_url, branch_name):
+    """
+    Check if a branch exists in a github repository
+    """
     # List all branches from the remote repository
     branches = get_github_repo_available_branches(remote_url)
 
@@ -409,7 +416,11 @@ def check_github_repo_branch_exists(remote_url, branch_name):
 
 
 def split_and_label_prompt_parts_from_string(input_string):
-    # This regex looks for substrings that are either inside brackets (considered files) or are not brackets and commas (considered text).
+    """
+    Split and label the prompt parts from a string
+    """
+    # This regex looks for substrings that are either inside brackets (considered files) or are not brackets and
+    # commas (considered text).
     pattern = r'\[([^\]]+)\]|([^[\]]+)'
 
     # Find all matches of the pattern in the input string
@@ -438,7 +449,7 @@ def create_video_thumbnail(
     :param t: The timestamp in seconds
     :param video_path: The path to the video
     :param thumbnail_size: The size of the thumbnail
-    :return: The thumbnail
+    :return:
     """
     # Extract the first frame from the video
     first_frame = extract_video_frame_at_t(video_path, t)

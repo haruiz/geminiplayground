@@ -23,7 +23,7 @@ class MultimodalPartFactory:
         """
         path = Path(path)
         if path.is_file():
-            mime_type = mimetypes.guess_type(path.as_posix())[0]
+            mime_type: str = mimetypes.guess_type(path.as_posix())[0]
             if mime_type.startswith("image"):
                 return ImageFile(path, **kwargs)
             if mime_type.startswith("video"):

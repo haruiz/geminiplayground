@@ -1,10 +1,20 @@
 import logging
 import typing
+from pathlib import Path
+from urllib.parse import urlparse
 
 from github import Github
-
+import git
 from geminiplayground.core import GeminiClient
-from geminiplayground.utils import *
+from geminiplayground.utils import (
+    check_github_repo_branch_exists,
+    folder_contains_git_repo,
+    get_code_files_in_dir,
+    get_github_repo_available_branches,
+    get_gemini_playground_cache_dir,
+    get_repo_name_from_url,
+    GitRemoteProgress
+)
 from .multimodal_part import MultimodalPart
 
 logger = logging.getLogger("rich")
@@ -15,6 +25,9 @@ class GitRepoBranchNotFoundException(Exception):
 
 
 class GitRepo(MultimodalPart):
+    """
+    Git Repo Part implementation
+    """
 
     def __init__(self, repo_folder: typing.Union[str, Path], **kwargs):
         # set the output directory for the repos
@@ -138,7 +151,6 @@ class GitRepo(MultimodalPart):
     def content_parts(self):
         """
         Get the content parts for the repo
-        :param category: the category of the content parts to get
         :return:
         """
         try:

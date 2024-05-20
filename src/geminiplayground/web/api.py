@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import os
 import shutil
@@ -14,10 +13,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.concurrency import run_in_threadpool
 from geminiplayground.core import GeminiClient
-from geminiplayground.parts import GitRepoBranchNotFoundException, GitRepo, MultimodalPartFactory, MultimodalPart
-from geminiplayground.schemas import GenerationSettings
-from geminiplayground.utils import get_repo_name, check_github_repo_branch_exists, \
-    get_github_repo_available_branches, folder_contains_git_repo, get_gemini_playground_cache_dir, \
+from geminiplayground.parts import GitRepoBranchNotFoundException, GitRepo, MultimodalPartFactory
+from geminiplayground.schemas import GenerationSettings, ChatHistory
+from geminiplayground.utils import get_repo_name, get_github_repo_available_branches, folder_contains_git_repo, \
+    get_gemini_playground_cache_dir, \
     create_image_thumbnail, create_video_thumbnail
 from .db.models import MultimodalPartEntry as MultimodalPartDBModel, EntryStatus
 from .db.session_manager import get_db_session
@@ -52,57 +51,6 @@ async def get_tags_handler(request: Request, db_session: DBSessionDep, backgroun
     query = select(MultimodalPartDBModel)
     result = await db_session.execute(query)
     return result.scalars().all()
-
-
-@api.websocket("/ws")
-async def websocket_receiver(websocket: WebSocket):
-    try:
-        await websocket.accept()
-        chat_history = []
-
-        async def dispatch_event(event_type, data=None):
-            await websocket.send_json({"event": event_type, "data": data})
-
-        while True:
-
-            data = await websocket.receive_json()
-            event = data.get("event")
-            data = data.get("data")
-            print(event)
-            match event:
-                case "generate_response":
-                    generate_prompt = data.get("message")
-                    generative_model = data.get("model")
-                    generate_settings = data.get("settings", None)
-                    try:
-                        chat = gemini_client.start_chat(model=generative_model, history=chat_history)
-                        prompt_parts = await get_parts_from_prompt_text(generate_prompt)
-                        logger.info(f"Prompt parts: {len(prompt_parts)}")
-
-                        generate_response = await run_in_threadpool(lambda: chat.generate_response(prompt_parts,
-                                                                                                   stream=True,
-                                                                                                   generation_config=GenerationSettings(
-                                                                                                       **generate_settings)))
-
-                        await dispatch_event("response_started")
-                        for response_chunk in generate_response:
-                            await dispatch_event("response_chunk", response_chunk.text)
-                        await dispatch_event("response_completed")
-                    except (HttpError, Exception) as e:
-                        error_message = e.reason \
-                            if hasattr(e, "reason") else e.message \
-                            if hasattr(e, "message") else str(e)
-                        logger.error(e)
-                        await dispatch_event("response_error", {
-                            "message": error_message
-                        })
-
-                case "clear_queue":
-                    chat_history = []
-                case _:
-                    pass
-    except WebSocketDisconnect as e:
-        logger.error(e)
 
 
 @api.get("/tags")
@@ -333,3 +281,59 @@ async def delete_part_handler(request: Request, background_tasks: BackgroundTask
     except Exception as e:
         logger.error(e)
         raise HTTPException(status_code=500, detail=repr(e))
+
+
+@api.websocket("/ws")
+async def websocket_receiver(websocket: WebSocket):
+    """
+    Websocket receiver
+    """
+    try:
+        await websocket.accept()
+        chat_history: list | ChatHistory = []
+
+        async def dispatch_event(event_type, data=None):
+            """
+            Dispatch websocket event
+            """
+            await websocket.send_json({"event": event_type, "data": data})
+
+        while True:
+
+            data = await websocket.receive_json()
+            event = data.get("event")
+            data = data.get("data")
+            match event:
+                case "generate_response":
+                    generate_prompt = data.get("message")
+                    generative_model = data.get("model")
+                    generate_settings = data.get("settings", None)
+                    try:
+                        chat = gemini_client.start_chat(model=generative_model, history=chat_history)
+                        prompt_parts = await get_parts_from_prompt_text(generate_prompt)
+                        logger.info(f"Prompt parts: {len(prompt_parts)}")
+
+                        generate_response = await run_in_threadpool(lambda: chat.generate_response(prompt_parts,
+                                                                                                   stream=True,
+                                                                                                   generation_config=GenerationSettings(
+                                                                                                       **generate_settings)))
+
+                        await dispatch_event("response_started")
+                        for response_chunk in generate_response:
+                            await dispatch_event("response_chunk", response_chunk.text)
+                        await dispatch_event("response_completed")
+                    except (HttpError, Exception) as e:
+                        error_message = e.reason \
+                            if hasattr(e, "reason") else e.message \
+                            if hasattr(e, "message") else str(e)
+                        logger.error(e)
+                        await dispatch_event("response_error", {
+                            "message": error_message
+                        })
+
+                case "clear_queue":
+                    chat_history = []
+                case _:
+                    pass
+    except WebSocketDisconnect as e:
+        logger.error(e)

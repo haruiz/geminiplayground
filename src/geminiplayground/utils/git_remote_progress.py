@@ -30,11 +30,11 @@ class GitRemoteProgress(git.RemoteProgress):
         return cls.OP_CODE_MAP.get(op_code_masked, "?").title()
 
     def update(
-        self,
-        op_code: int,
-        cur_count,
-        max_count=None,
-        message="",
+            self,
+            op_code: int,
+            cur_count,
+            max_count=None,
+            message="",
     ) -> None:
         # Start new bar on each BEGIN-flag
         if op_code & self.BEGIN:

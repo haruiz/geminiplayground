@@ -48,6 +48,31 @@ geminiplayground = "geminiplayground.cli:run"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.3.0"
+flake8 = "^7.0.0"
+ruff = "^0.4.4"
+mypy = "^1.10.0"
+
+[tool.mypy]
+exclude = ["build", "dist", "venv", ".venv", ".mypy_cache", ".pytest_cache", ".git", ".tox", ".eggs", "__pycache__"]
+ignore_missing_imports = true
+
+[tool.black]
+line-length = 88
+exclude = '/(\.git|\.venv|\.mypy_cache|\.pytest_cache|\.tox|\.eggs|__pycache__|build|dist)/'
+target-version = ['py310']
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "tab"
+docstring-code-format = "google"
+exclude = '/(\.git|\.venv|\.mypy_cache|\.pytest_cache|\.tox|\.eggs|__pycache__|build|dist)/'
+
+[tool.ruff.lint]
+exclude = '/(\.git|\.venv|\.mypy_cache|\.pytest_cache|\.tox|\.eggs|__pycache__|build|dist)/'
+
+# Skip unused variable rules (`F841`).
+#extend-ignore = ["F401"]
+
 
 [build-system]
 requires = ["poetry-core"]

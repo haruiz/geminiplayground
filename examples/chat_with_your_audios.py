@@ -1,5 +1,3 @@
-from rich import print
-
 from geminiplayground.core import GeminiClient
 from geminiplayground.parts import AudioFile
 from geminiplayground.schemas import GenerateRequestParts, TextPart, GenerateRequest

@@ -4,6 +4,8 @@ from rich.logging import RichHandler
 
 from geminiplayground.core import GeminiClient
 
+__all__ = ["GeminiClient"]
+
 FORMAT = "%(message)s"
 logging.basicConfig(
     level=logging.INFO,

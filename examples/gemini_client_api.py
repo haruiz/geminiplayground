@@ -1,7 +1,5 @@
-from pathlib import Path
 from rich import print
 from geminiplayground import GeminiClient
-from geminiplayground.schemas import UploadFile
 
 from dotenv import load_dotenv, find_dotenv
 

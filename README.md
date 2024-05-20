@@ -28,6 +28,8 @@ you can:
 * **Rich Logging:** Get informative and colorful logging messages for
   better understanding of the process.
 
+You can find usage examples in the `examples` directory.
+
 ### Installation
 
 ```bash

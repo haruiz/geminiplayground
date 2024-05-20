@@ -19,9 +19,6 @@ def chat_wit_your_pdf():
 
     pdf_file_path = "https://www.tnstate.edu/faculty/fyao/COMP3050/Py-tutorial.pdf"
     pdf_file = PdfFile(pdf_file_path, gemini_client=gemini_client)
-    pdf_text = pdf_file.files
-    print("pdf text: ", pdf_text)
-
     pdf_parts = pdf_file.content_parts()
     print("pdf parts: ", pdf_parts)
     request_parts = GenerateRequestParts(

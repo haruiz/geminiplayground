@@ -2,7 +2,6 @@ import logging
 import typing
 import validators
 import urllib.request
-import ssl
 from geminiplayground.catching import cache
 from geminiplayground.core.gemini_client import GeminiClient
 from geminiplayground.schemas import TextPart
@@ -15,8 +14,8 @@ from urllib.error import HTTPError
 from PyPDF2 import PdfReader
 from typing import List
 import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
 
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = logging.getLogger("rich")
 
@@ -52,17 +51,6 @@ def get_pdf_from_anywhere(uri_or_path: typing.Union[str, Path]) -> str:
     return uri_or_path
 
 
-def read_file(path_file: str) -> List[str]:
-    logger.info(f"reading file: {path_file}")
-    text = []
-    pdf_path = get_pdf_from_anywhere(path_file)
-    with open(pdf_path, "rb") as pdf_file:
-        reader = PdfReader(pdf_file)
-        for page in reader.pages:
-            text.append(page.extract_text())
-    return text
-
-
 class PdfFile(MultimodalPart):
     """
     PDF file part implementation
@@ -73,57 +61,22 @@ class PdfFile(MultimodalPart):
         self.pdf_name = get_file_name_from_path(pdf_path)
         self.gemini_client = kwargs.get("gemini_client", GeminiClient())
 
-    def upload(self):
+    def __get_pdf_parts(self) -> List[TextPart]:
         """
-        Read the pdf to Gemini
-        :return:
+        Get the content parts for the pdf
+        :return: List[TextPart]
         """
-        if cache.get(self.pdf_name):
-            cached_file = cache.get(self.pdf_name)
-            return cached_file
-
-        delta_t = get_expire_time()
-        text = read_file(self.pdf_path)
-        cache.set(self.pdf_name, text, expire=delta_t)
-        return text
-
-    @property
-    def files(self):
-        """
-        Get the files
-        :return:
-        """
-        return self.upload()
-
-    def force_upload(self):
-        """
-        Force the upload of the pdf
-        :return:
-        """
-        self.delete()
-        self.upload()
-
-    def delete(self):
-        """
-        Delete the pdf from Gemini
-        :return:
-        """
-        if cache.get(self.pdf_name):
-            cached_file = cache.get(self.pdf_name)
-            self.gemini_client.delete_file(cached_file.name)
-            # remove the cached file
-            cache.delete(self.pdf_name)
-
-    def clear_cache(self):
-        """
-        Clear the cache
-        :return:
-        """
-        cache.delete(self.pdf_name)
+        text_parts = []
+        pdf_path = get_pdf_from_anywhere(self.pdf_path)
+        with open(pdf_path, "rb") as pdf_file:
+            reader = PdfReader(pdf_file)
+            for page in reader.pages:
+                text_parts.append(TextPart(text=page.extract_text()))
+        return text_parts
 
     def content_parts(self):
         """
         Get the content parts for the pdf
         :return:
         """
-        return [TextPart(text=text) for text in self.files]
+        return self.__get_pdf_parts()

@@ -17,7 +17,7 @@ from geminiplayground.parts import GitRepoBranchNotFoundException, GitRepo, Mult
 from geminiplayground.schemas import GenerationSettings, ChatHistory
 from geminiplayground.utils import get_repo_name, get_github_repo_available_branches, folder_contains_git_repo, \
     get_gemini_playground_cache_dir, \
-    create_image_thumbnail, create_video_thumbnail
+    create_image_thumbnail, create_video_thumbnail, create_pdf_thumbnail
 from .db.models import MultimodalPartEntry as MultimodalPartDBModel, EntryStatus
 from .db.session_manager import get_db_session
 from .utils import get_parts_from_prompt_text
@@ -168,8 +168,12 @@ async def upload_file(session: AsyncSession, file_path: Path, content_type: str)
         return
 
     try:
-        if content_type in ["image", "video"]:
-            thumbnail_func = create_image_thumbnail if content_type == "image" else create_video_thumbnail
+        if content_type in ["image", "video", "pdf"]:
+            thumbnail_func = {
+                "image": create_image_thumbnail,
+                "video": create_video_thumbnail,
+                "pdf": create_pdf_thumbnail
+            }[content_type]
             thumbnail_img = thumbnail_func(file_path, THUMBNAIL_SIZE)
             if thumbnail_img:
                 files_dir = Path(os.environ["FILES_DIR"])
@@ -201,7 +205,10 @@ async def upload_file_handler(request: Request, background_tasks: BackgroundTask
     """
     try:
         mime_type = upload_file.content_type
-        supported_content_types = ["image/png", "image/jpeg", "image/jpg", "video/mp4", "audio/mpeg", "audio/mp3"]
+        supported_content_types = ["image/png", "image/jpeg", "image/jpg", "video/mp4", "audio/mpeg", "audio/mp3",
+                                   "application/pdf"]
+
+        print(f"Content type: {mime_type}")
         if mime_type not in supported_content_types:
             return JSONResponse(content={"error": f"Unsupported content type: {mime_type}"})
         content_type = {
@@ -210,7 +217,8 @@ async def upload_file_handler(request: Request, background_tasks: BackgroundTask
             "image/jpg": "image",
             "video/mp4": "video",
             "audio/mpeg": "audio",
-            "audio/mp3": "audio"
+            "audio/mp3": "audio",
+            "application/pdf": "pdf"
         }[mime_type]
 
         file_name = upload_file.filename
@@ -220,6 +228,7 @@ async def upload_file_handler(request: Request, background_tasks: BackgroundTask
         with open(file_path, "wb") as file:
             file_bytes = await upload_file.read()
             file.write(file_bytes)
+
         new_part = MultimodalPartDBModel(
             name=file_name,
             content_type=content_type

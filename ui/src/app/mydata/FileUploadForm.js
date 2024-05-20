@@ -24,6 +24,7 @@ const ALLOWED_FILE_TYPES = [
     'audio/mpeg',
     'audio/wav',
     'audio/mp3',
+    "application/pdf",
 ];
 // Form Schema Validation
 const fileUploadFormSchema = z.object({

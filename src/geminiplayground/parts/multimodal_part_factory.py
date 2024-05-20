@@ -24,12 +24,12 @@ class MultimodalPartFactory:
         path = Path(path)
         if path.is_file():
             mime_type: str = mimetypes.guess_type(path.as_posix())[0]
-            if mime_type.startswith("image"):
+            if "image" in mime_type:
                 return ImageFile(path, **kwargs)
-            if mime_type.startswith("video"):
+            if "video" in mime_type:
                 return VideoFile(path, **kwargs)
-            if mime_type.startswith("audio"):
+            if "audio" in mime_type:
                 return AudioFile(path, **kwargs)
-            if mime_type.startswith("pdf"):
+            if "pdf" in mime_type:
                 return PdfFile(path, **kwargs)
         raise ValueError(f"Unsupported file type: {path}")

@@ -52,7 +52,7 @@ async def process_multimodal_part(part, files_dir, repos_dir):
         part_entry = part_entry.scalars().first()
         if part_entry:
             content_type = part_entry.content_type
-            if content_type in ["image", "video", "audio"]:
+            if content_type in ["image", "video", "audio", "pdf"]:
                 file_path = files_dir.joinpath(part_entry.name)
                 multimodal_part = MultimodalPartFactory.from_path(file_path)
                 parts.extend(multimodal_part.content_parts())

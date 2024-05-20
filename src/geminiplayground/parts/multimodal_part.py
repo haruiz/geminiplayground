@@ -3,6 +3,9 @@ from abc import ABC, abstractmethod
 
 
 class MultimodalPart(ABC):
+    """
+    Abstract class for multimodal part
+    """
 
     @property
     def files(self):
@@ -10,14 +13,21 @@ class MultimodalPart(ABC):
         Get the files of the multimodal part
         :return:
         """
-        raise NotImplementedError
+        return []
+
+    def clear_cache(self):
+        """
+        Clear the cache of the multimodal part
+        :return:
+        """
+        ...
 
     def upload(self):
         """
         Upload the multimodal part
         :return:
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def content_parts(self, **kwargs):

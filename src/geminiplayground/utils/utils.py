@@ -6,7 +6,7 @@ import urllib
 from io import BytesIO
 from pathlib import Path
 from urllib.parse import urlparse
-
+import fitz
 import shutil
 import tempfile
 from contextlib import contextmanager
@@ -460,6 +460,36 @@ def create_video_thumbnail(
     first_frame.save(thumbnail_bytes, format="JPEG")
     thumbnail_bytes.seek(0)
     return PILImage.open(thumbnail_bytes)
+
+
+def create_pdf_thumbnail(
+        pdf_path: typing.Union[str, Path], thumbnail_size: tuple = (128, 128), zoom: float = 0.2
+) -> PILImageType:
+    """
+    Create a thumbnail for a PDF
+    :param pdf_path: The path to the PDF
+    :param thumbnail_size: The size of the thumbnail
+    :return:
+    """
+    # Convert the first page of the PDF to an image
+    # Open the provided PDF file
+    document = fitz.open(pdf_path)
+
+    # Select the first page
+    page = document[0]
+
+    # Set the zoom factor for the image
+    mat = fitz.Matrix(zoom, zoom)
+
+    # Render page to an image (pixmap)
+    pix = page.get_pixmap(matrix=mat)
+
+    # Save the pixmap as an image file
+    image = PILImage.frombytes("RGB", [pix.width, pix.height], pix.samples)
+
+    # Create a thumbnail from the image
+    image.thumbnail(thumbnail_size)
+    return image
 
 
 def create_image_thumbnail(

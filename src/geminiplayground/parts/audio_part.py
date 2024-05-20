@@ -1,6 +1,7 @@
 import logging
 import typing
 import validators
+import ssl
 import urllib.request
 from geminiplayground.catching import cache
 from geminiplayground.core.gemini_client import GeminiClient
@@ -11,6 +12,7 @@ from geminiplayground.utils import get_file_name_from_path
 from geminiplayground.utils import get_expire_time
 from pathlib import Path
 from urllib.error import HTTPError
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = logging.getLogger("rich")
 

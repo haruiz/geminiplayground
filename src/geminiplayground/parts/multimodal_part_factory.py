@@ -2,10 +2,10 @@ import mimetypes
 import typing
 from pathlib import Path
 
-from .image_part import ImageFile
-from .video_part import VideoFile
 from .audio_part import AudioFile
+from .image_part import ImageFile
 from .pdf_part import PdfFile
+from .video_part import VideoFile
 
 
 class MultimodalPartFactory:

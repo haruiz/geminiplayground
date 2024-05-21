@@ -1,9 +1,9 @@
 import json
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 
 
 class MultimodalPart(ABC):
-
     @property
     def files(self):
         """

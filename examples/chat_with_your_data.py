@@ -1,9 +1,9 @@
-from rich import print
-
+from dotenv import find_dotenv
+from dotenv import load_dotenv
 from geminiplayground.core import GeminiClient
 from geminiplayground.parts import VideoFile
 from geminiplayground.parts.git_repo_part import GitRepo
-from dotenv import load_dotenv, find_dotenv
+from rich import print
 
 load_dotenv(find_dotenv())
 
@@ -18,7 +18,7 @@ if __name__ == "__main__":
         config={
             "content": "code-files",  # "code-files" or "issues"
             "file_extensions": [".py"],
-        }
+        },
     )
     prompt = [
         "Create a blog post" "Title: Introduction to transformers",

@@ -1,11 +1,13 @@
+from dotenv import find_dotenv
+from dotenv import load_dotenv
 from geminiplayground.core import GeminiClient
-from geminiplayground.parts import VideoFile, ImageFile
-from geminiplayground.schemas import HarmCategory, HarmBlockThreshold
-from dotenv import load_dotenv, find_dotenv
+from geminiplayground.parts import ImageFile
+from geminiplayground.parts import VideoFile
+from geminiplayground.schemas import HarmBlockThreshold
+from geminiplayground.schemas import HarmCategory
 
 load_dotenv(find_dotenv())
 if __name__ == "__main__":
-
     gemini_client = GeminiClient()
 
     video_file_path = "./../data/BigBuckBunny_320x180.mp4"

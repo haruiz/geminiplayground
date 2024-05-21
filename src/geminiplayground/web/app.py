@@ -2,15 +2,16 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
+from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+
 from .api import api
-from .ui import ui
 from .db.session_manager import sessionmanager
-from .db.models import *
+from .ui import ui
 
 BASE_DIR = Path(__file__).resolve().parent
 FILES_DIR = Path(BASE_DIR, "files")

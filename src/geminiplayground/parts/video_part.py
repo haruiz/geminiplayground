@@ -1,15 +1,32 @@
 import logging
-from datetime import datetime, timedelta
+import typing
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import Union
+
 from geminiplayground.catching import cache
 from geminiplayground.core.gemini_client import GeminiClient
-from geminiplayground.schemas import TextPart, UploadFile
-from geminiplayground.utils import *
+from geminiplayground.schemas import TextPart
+from geminiplayground.schemas import UploadFile
+from geminiplayground.utils import beautify_file_size
+from geminiplayground.utils import extract_video_duration
+from geminiplayground.utils import extract_video_frame_count
+from geminiplayground.utils import extract_video_frames
+from geminiplayground.utils import get_expire_time
+from geminiplayground.utils import get_file_name_from_path
+from geminiplayground.utils import get_file_size
+from geminiplayground.utils import get_timestamp_seconds
+from geminiplayground.utils import seconds_to_time_string
+from geminiplayground.utils import validators
+
 from .multimodal_part import MultimodalPart
 
 logger = logging.getLogger("rich")
 
 
-def upload_video(video_path: typing.Union[str, Path], gemini_client: GeminiClient = None):
+def upload_video(
+    video_path: Union[str, Path], gemini_client: GeminiClient | None = None
+):
     """
     Upload an image to Gemini
     :param gemini_client: The Gemini client
@@ -26,11 +43,16 @@ def upload_video(video_path: typing.Union[str, Path], gemini_client: GeminiClien
 
     with TemporaryDirectory(video_path.stem) as temp_dir:
         frames_files = extract_video_frames(video_path, temp_dir)
-        frames_upload_files = [UploadFile.from_path(file_path, body={"file": {"displayName": file_path.name}}) for
-                               file_path in frames_files]
+        frames_upload_files = [
+            UploadFile.from_path(
+                file_path, body={"file": {"displayName": file_path.name}}
+            )
+            for file_path in frames_files
+        ]
         uploaded_files_timestamp = [
             seconds_to_time_string(get_timestamp_seconds(file_path.name, "_frame"))
-            for file_path in frames_files]
+            for file_path in frames_files
+        ]
         uploaded_files = gemini_client.upload_files(*frames_upload_files)
         return list(zip(uploaded_files, uploaded_files_timestamp))
 
@@ -41,7 +63,6 @@ class VideoFile(MultimodalPart):
     """
 
     def __init__(self, video_path: typing.Union[str, Path], **kwargs):
-
         # Set the output directory for the frames
         if validators.url(video_path):
             raise ValueError("Videos from URLs are not supported yet")

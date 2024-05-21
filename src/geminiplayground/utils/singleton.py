@@ -6,7 +6,7 @@ class Singleton(type):
     This is a thread-safe implementation of Singleton.
     """
 
-    _instances = {}
+    _instances: dict = {}
 
     _lock: Lock = Lock()
     """

@@ -1,9 +1,10 @@
-from rich import print
-
+from dotenv import find_dotenv
+from dotenv import load_dotenv
 from geminiplayground.core import GeminiClient
 from geminiplayground.parts import PdfFile
-from geminiplayground.schemas import GenerateRequestParts, TextPart, GenerateRequest
-from dotenv import load_dotenv, find_dotenv
+from geminiplayground.schemas import GenerateRequest
+from geminiplayground.schemas import GenerateRequestParts
+from geminiplayground.schemas import TextPart
 from rich import print
 
 load_dotenv(find_dotenv())
@@ -26,7 +27,7 @@ def chat_wit_your_pdf():
     print("pdf parts: ", pdf_parts)
     request_parts = GenerateRequestParts(
         parts=[
-            TextPart(text="Please create a summary of the pdf file:"),
+            TextPart(text="Please create code smippet del pdf :"),
             *pdf_parts,
         ]
     )

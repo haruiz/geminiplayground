@@ -1,11 +1,15 @@
-import sqlalchemy
-
-from geminiplayground import GeminiClient
-from geminiplayground.web.db.models import *
-from sqlalchemy import select, insert
-from geminiplayground.web.db.session_manager import sessionmanager, get_db_session
 import asyncio
-from dotenv import load_dotenv, find_dotenv
+
+import sqlalchemy
+from dotenv import find_dotenv
+from dotenv import load_dotenv
+from geminiplayground import GeminiClient
+from geminiplayground.web.db.models import Mapped
+from geminiplayground.web.db.models import mapped_column
+from geminiplayground.web.db.session_manager import get_db_session
+from geminiplayground.web.db.session_manager import sessionmanager
+from sqlalchemy import insert
+
 from .registry import mapper_registry as reg
 
 load_dotenv(find_dotenv())
@@ -33,7 +37,9 @@ class User:
 async def run():
     await sessionmanager.init()
     async for session in get_db_session():
-        results = await session.execute(sqlalchemy.text("SELECT name FROM sqlite_master WHERE type='table';"))
+        results = await session.execute(
+            sqlalchemy.text("SELECT name FROM sqlite_master WHERE type='table';")
+        )
         print("Tables in the database:", results.rowcount)
         for row in results:
             print(row)
@@ -63,9 +69,9 @@ async def multi_inference():
     # response = await loop.run_in_executor(None, query_gemini)
     # response2 = await loop.run_in_executor(None, query_gemini)
     # print(response, response2)
-    results = await asyncio.gather(*[
-        loop.run_in_executor(None, query_gemini) for _ in range(10)
-    ])
+    results = await asyncio.gather(
+        *[loop.run_in_executor(None, query_gemini) for _ in range(10)]
+    )
     for task in asyncio.all_tasks():
         print(task)
 
@@ -73,5 +79,5 @@ async def multi_inference():
         print("Inference", i, result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(multi_inference())

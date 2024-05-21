@@ -1,16 +1,23 @@
 import logging
-from datetime import datetime, timedelta
+import typing
+from pathlib import Path
+from tempfile import TemporaryFile
 
 from geminiplayground.catching import cache
 from geminiplayground.core import GeminiClient
 from geminiplayground.schemas import UploadFile
-from geminiplayground.utils import *
+from geminiplayground.utils import get_expire_time
+from geminiplayground.utils import get_file_name_from_path
+from geminiplayground.utils import get_image_from_anywhere
+
 from .multimodal_part import MultimodalPart
 
 logger = logging.getLogger("rich")
 
 
-def upload_image(image_path: typing.Union[str, Path], gemini_client: GeminiClient = None):
+def upload_image(
+    image_path: typing.Union[str, Path], gemini_client: GeminiClient = None
+):
     """
     Upload an image to Gemini
     :param gemini_client: The Gemini client
@@ -22,8 +29,9 @@ def upload_image(image_path: typing.Union[str, Path], gemini_client: GeminiClien
 
     with TemporaryFile(image_filename) as temp_file:
         pil_image.save(temp_file)
-        upload_file = UploadFile.from_path(temp_file,
-                                           body={"file": {"displayName": image_filename}})
+        upload_file = UploadFile.from_path(
+            temp_file, body={"file": {"displayName": image_filename}}
+        )
         uploaded_file = gemini_client.upload_file(upload_file)
         return uploaded_file
 

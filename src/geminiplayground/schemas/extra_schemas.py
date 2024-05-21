@@ -4,7 +4,9 @@ from pathlib import Path
 
 
 class UploadFile:
-    def __init__(self, file_path: str, mimetype: str = None, body: dict = None):
+    def __init__(
+        self, file_path: str, mimetype: str | None = None, body: dict | None = None
+    ):
         self.file_path = file_path
         self.mimetype = mimetype
         self.body = body
@@ -20,7 +22,7 @@ class UploadFile:
         return cls(
             file_path=str(file_path),
             mimetype=mimetypes.guess_type(file_path)[0],
-            **kwargs
+            **kwargs,
         )
 
     def __str__(self):

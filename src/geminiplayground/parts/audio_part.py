@@ -1,17 +1,20 @@
 import logging
-import typing
-import validators
 import ssl
+import typing
 import urllib.request
+from pathlib import Path
+from urllib.error import HTTPError
+
+import validators
 from geminiplayground.catching import cache
 from geminiplayground.core.gemini_client import GeminiClient
 from geminiplayground.schemas import UploadFile
-from .multimodal_part import MultimodalPart
-from geminiplayground.utils import normalize_url
-from geminiplayground.utils import get_file_name_from_path
 from geminiplayground.utils import get_expire_time
-from pathlib import Path
-from urllib.error import HTTPError
+from geminiplayground.utils import get_file_name_from_path
+from geminiplayground.utils import normalize_url
+
+from .multimodal_part import MultimodalPart
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = logging.getLogger("rich")
@@ -47,8 +50,8 @@ def get_audio_from_anywhere(uri_or_path: typing.Union[str, Path]) -> str:
 
 
 def upload_audio(
-        audio_path: typing.Union[str, Path],
-        gemini_client: GeminiClient = None):
+    audio_path: typing.Union[str, Path], gemini_client: GeminiClient = None
+):
     """
     Upload an audio to Gemini
     :param gemini_client: The Gemini client
@@ -59,8 +62,9 @@ def upload_audio(
     audio_filename = get_file_name_from_path(audio_path)
 
     if audio_path:
-        upload_file = UploadFile.from_path(audio_path,
-                                           body={"file": {"displayName": audio_filename}})
+        upload_file = UploadFile.from_path(
+            audio_path, body={"file": {"displayName": audio_filename}}
+        )
         uploaded_file = gemini_client.upload_file(upload_file)
         return uploaded_file
 

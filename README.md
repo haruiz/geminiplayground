@@ -94,11 +94,11 @@ for candidate in response.candidates:
 ```
 
 ```text
-The video is a short animated film called "Big Buck Bunny." It is a comedy about a large, white rabbit 
-who is bullied by three smaller animals. The rabbit eventually gets revenge on his tormentors. The film 
+The video is a short animated film called "Big Buck Bunny." It is a comedy about a large, white rabbit
+who is bullied by three smaller animals. The rabbit eventually gets revenge on his tormentors. The film
 was created using Blender, a free and open-source 3D animation software.
 
-The image is of four dice, each a different color. The dice are transparent and have white dots. The 
+The image is of four dice, each a different color. The dice are transparent and have white dots. The
 image is isolated on a black background.
 ```
 
@@ -292,4 +292,3 @@ Contributions are welcome! Please see the`CONTRIBUTING.md` file for guidelines [
 ### License
 
 This codebase is licensed under the MIT License.See the`LICENSE`file for details.
-

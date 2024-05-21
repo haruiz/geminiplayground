@@ -48,11 +48,13 @@ class GitRemoteProgress(git.RemoteProgress):
         if op_code & git.RemoteProgress.END:
             self._destroy_bar()
 
-    def _dispatch_bar(self, title="") -> None:
+    def _dispatch_bar(self, title=""):
         """Create a new progress bar"""
         self.alive_bar_instance = alive_bar(manual=True, title=title)
-        self.bar = self.alive_bar_instance.__enter__()
+        if self.alive_bar_instance is not None:
+            self.bar = self.alive_bar_instance.__enter__()
 
-    def _destroy_bar(self) -> None:
+    def _destroy_bar(self):
         """Destroy an existing progress bar"""
-        self.alive_bar_instance.__exit__(None, None, None)
+        if self.alive_bar_instance is not None:
+            self.alive_bar_instance.__exit__(None, None, None)

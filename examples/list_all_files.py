@@ -1,7 +1,7 @@
-from rich import print
-
+from dotenv import find_dotenv
+from dotenv import load_dotenv
 from geminiplayground import GeminiClient
-from dotenv import load_dotenv, find_dotenv
+from rich import print
 
 load_dotenv(find_dotenv())
 if __name__ == "__main__":

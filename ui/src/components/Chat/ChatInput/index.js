@@ -20,7 +20,7 @@ function tagTemplate(tagData) {
                 class='tagify__tag  custom-tag'
                 {this.getAttributes(tagData)}>
             <x title='' class='tagify__tag__removeBtn' role='button' aria-label='remove tag'></x>
-            <div style="display: flex;  align-items: center"> 
+            <div style="display: flex;  align-items: center">
                 <div class='tagify__tag__avatar-wrap' >
                     <img  alt="icon" height="32px" width="32px" src="${tagData.icon}" />
                 </div>

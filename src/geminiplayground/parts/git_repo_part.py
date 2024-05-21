@@ -1,10 +1,19 @@
 import logging
 import typing
-
-from github import Github
+from pathlib import Path
+from urllib.parse import urlparse
 
 from geminiplayground.core import GeminiClient
-from geminiplayground.utils import *
+from geminiplayground.utils import check_github_repo_branch_exists
+from geminiplayground.utils import folder_contains_git_repo
+from geminiplayground.utils import get_code_files_in_dir
+from geminiplayground.utils import get_gemini_playground_cache_dir
+from geminiplayground.utils import get_github_repo_available_branches
+from geminiplayground.utils import get_repo_name_from_url
+from geminiplayground.utils import git
+from geminiplayground.utils.git import GitRemoteProgress
+from github import Github
+
 from .multimodal_part import MultimodalPart
 
 logger = logging.getLogger("rich")
@@ -15,7 +24,6 @@ class GitRepoBranchNotFoundException(Exception):
 
 
 class GitRepo(MultimodalPart):
-
     def __init__(self, repo_folder: typing.Union[str, Path], **kwargs):
         # set the output directory for the repos
         try:
@@ -23,7 +31,9 @@ class GitRepo(MultimodalPart):
             logger.info(f"Checking if {repo_folder} is a git repository")
 
             assert repo_folder.exists(), f"{repo_folder} does not exist"
-            assert folder_contains_git_repo(repo_folder), f"{repo_folder} is not a git repository"
+            assert folder_contains_git_repo(
+                repo_folder
+            ), f"{repo_folder} is not a git repository"
 
             self.repo_folder = repo_folder
             self.repo = git.Repo(repo_folder)
@@ -38,7 +48,12 @@ class GitRepo(MultimodalPart):
 
             valid_contents = {"code-files", "issues"}
             if self.content not in valid_contents:
-                raise ValueError(f"Invalid content {self.content}, should be code-files or issues")
+                raise ValueError(
+                    f"""
+                    Invalid content {
+                        self.content}, should be code-files or issues
+                    """
+                )
         except Exception as e:
             logger.error(e)
             raise e
@@ -75,8 +90,11 @@ class GitRepo(MultimodalPart):
 
         if not check_github_repo_branch_exists(repo_url, branch):
             available_branches = get_github_repo_available_branches(repo_url)
-            error_message = (f"Branch {branch} does not exist in {repo_url}. "
-                             f"Available branches for the repository {repo_name} are: {available_branches}")
+            error_message = f"""
+                Branch {branch} does not exist in {repo_url}.
+                Available branches for the repository {
+                repo_name} are: {available_branches}
+                """
             logger.error(error_message)
             raise GitRepoBranchNotFoundException(error_message)
 
@@ -102,10 +120,13 @@ class GitRepo(MultimodalPart):
         :return:
         """
         from geminiplayground.schemas.parts_schemas import TextPart
+
         file_extensions = self.config.get("file_extensions", None)
         exclude_dirs = self.config.get("exclude_dirs", None)
 
-        code_files = get_code_files_in_dir(self.repo_folder, file_extensions, exclude_dirs)
+        code_files = get_code_files_in_dir(
+            self.repo_folder, file_extensions, exclude_dirs
+        )
         parts = []
         for file in code_files:
             with open(file, "r") as f:
@@ -120,6 +141,7 @@ class GitRepo(MultimodalPart):
         :return:
         """
         from geminiplayground.schemas.parts_schemas import TextPart
+
         issues_state = self.config.get("issues_state", "open")
 
         remotes = self.repo.remotes
@@ -144,7 +166,7 @@ class GitRepo(MultimodalPart):
         try:
             functions_map = {
                 "code-files": self.__get_parts_from_code_files,
-                "issues": self.__get_parts_from_repos_issues
+                "issues": self.__get_parts_from_repos_issues,
             }
             return functions_map[self.content]()
         except Exception as e:

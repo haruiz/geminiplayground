@@ -1,29 +1,29 @@
+import math
 import os
 import re
+import shutil
 import subprocess
-import typing
-import urllib
+import tempfile
+import urllib.request
+from contextlib import contextmanager
+from datetime import datetime
+from datetime import timedelta
 from io import BytesIO
 from pathlib import Path
+from typing import List
+from typing import Union
+from urllib.error import HTTPError
 from urllib.parse import urlparse
 
-import os
-import shutil
-import tempfile
-from contextlib import contextmanager
-import urllib.request
+import cv2
 import git
+import validators
 from PIL import Image as PILImage
 from PIL.Image import Image as PILImageType
-from urllib.error import HTTPError
-import cv2
-import math
 from tqdm import tqdm
-import validators
-from datetime import datetime, timedelta
 
 
-def rm_tree(pth: typing.Union[str, Path]):
+def rm_tree(pth: Union[str, Path]):
     """
     Recursively remove a directory and its contents
     :param pth:
@@ -40,7 +40,7 @@ def rm_tree(pth: typing.Union[str, Path]):
     pth.rmdir()
 
 
-def seconds_to_time_string(seconds):
+def seconds_to_time_string(seconds: int) -> str:
     """Converts an integer number of seconds to a string in the format '00:00'.
     Format is the expected format for Gemini 1.5.
     """
@@ -49,19 +49,21 @@ def seconds_to_time_string(seconds):
     return f"{minutes:02d}:{seconds:02d}"
 
 
-def get_timestamp_seconds(filename, prefix):
+def get_timestamp_seconds(filename: str, prefix: str) -> int | None:
     """Extracts the frame count (as an integer) from a filename with the format
     'output_file_prefix_frame0000.jpg'.
     """
     parts = filename.split(prefix)
     if len(parts) != 2:
-        return None  # Indicate that the filename might be incorrectly formatted
+        return (
+            None  # exception Indicate that the filename might be incorrectly formatted
+        )
 
     frame_count_str = parts[1].split(".")[0]
     return int(frame_count_str)
 
 
-def get_output_file_prefix(filename, prefix):
+def get_output_file_prefix(filename: str, prefix: str) -> str | None:
     """Extracts the output file prefix from a filename with the format
     'output_file_prefix_frame0000.jpg'.
     """
@@ -105,10 +107,6 @@ def get_image_from_url(url: str) -> PILImageType:
         else:
             raise
 
-    # image_bytes = BytesIO(response.content)
-    # image_obj = PILImage.open(image_bytes)
-    # return image_obj
-
 
 def get_image_from_path(path: str) -> PILImageType:
     """
@@ -117,7 +115,7 @@ def get_image_from_path(path: str) -> PILImageType:
     return PILImage.open(path)
 
 
-def get_image_from_anywhere(uri_or_path: typing.Union[str, Path]) -> PILImageType:
+def get_image_from_anywhere(uri_or_path: Union[str, Path]) -> PILImageType:
     """
     read an image from an url or local file and return it
     """
@@ -128,7 +126,7 @@ def get_image_from_anywhere(uri_or_path: typing.Union[str, Path]) -> PILImageTyp
         return get_image_from_path(uri_or_path)
 
 
-def get_file_name_from_path(path: str, include_extension=True):
+def get_file_name_from_path(path: str, include_extension=True) -> str:
     """
     Get the file name from a path
     :param path:
@@ -157,8 +155,8 @@ def get_gemini_playground_cache_dir() -> Path:
 
 
 def get_code_files_in_dir(
-        root_dir: typing.Union[str, Path], files_extensions=None, exclude_dirs=None
-) -> list:
+    root_dir: Union[str, Path], files_extensions=None, exclude_dirs=None
+) -> List[Path]:
     """
     Extract code files from the repo
     :return:
@@ -201,7 +199,7 @@ def get_code_files_in_dir(
     return code_files
 
 
-def folder_contains_git_repo(path):
+def folder_contains_git_repo(path: str) -> bool:
     """
     Check if a given folder is a git repository
     :param path:
@@ -225,7 +223,7 @@ def get_repo_name_from_url(url: str) -> str:
         last_suffix_index = len(url)
     if last_slash_index < 0 or last_suffix_index <= last_slash_index:
         raise Exception("invalid url format {}".format(url))
-    return url[last_slash_index + 1: last_suffix_index]
+    return url[last_slash_index + 1 : last_suffix_index]
 
 
 def get_repo_name_from_path(path: str) -> str:
@@ -250,7 +248,7 @@ def get_repo_name(path: str) -> str:
 
 
 @contextmanager
-def TemporaryDirectory(suffix="tmp"):
+def TemporaryDirectory(suffix: str = "tmp"):
     """
     Create a temporary directory
     """
@@ -262,12 +260,12 @@ def TemporaryDirectory(suffix="tmp"):
 
 
 @contextmanager
-def TemporaryFile(suffix="tmp"):
+def TemporaryFile(suffix: str = "tmp"):
     """
     Create a temporary file
     :param suffix:
     """
-    unique_name = next(tempfile._get_candidate_names())
+    unique_name = next(tempfile._get_candidate_names())  # type: ignore
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix, prefix=unique_name)
     file_name = tmp.name
     try:
@@ -277,8 +275,9 @@ def TemporaryFile(suffix="tmp"):
 
 
 def extract_video_frames(
-        video_path: typing.Union[str, Path], output_dir: typing.Union[str, Path]
-) -> list:
+    video_path: Union[str, Path],
+    output_dir: Union[str, Path],
+) -> List[Path]:
     """
     Extract frames from the video
     :return:
@@ -299,10 +298,9 @@ def extract_video_frames(
             if not ret:
                 break
             if count % int(fps) == 0:  # Extract a frame every second
-
                 frame_count += 1
                 file_name_prefix = os.path.basename(video_file_name).replace(".", "_")
-                frame_prefix = f"_frame"
+                frame_prefix = "_frame"
                 frame_image_filename = (
                     f"{file_name_prefix}{frame_prefix}{frame_count:04d}.jpg"
                 )
@@ -315,7 +313,7 @@ def extract_video_frames(
     return frames_files
 
 
-def extract_video_frame_count(video_path: typing.Union[str, Path]) -> int:
+def extract_video_frame_count(video_path: Union[str, Path]) -> int:
     """
     Extract the number of frames in a video
     :param video_path: The path to the video
@@ -328,7 +326,7 @@ def extract_video_frame_count(video_path: typing.Union[str, Path]) -> int:
     return int(num_frames)
 
 
-def extract_video_duration(video_path: typing.Union[str, Path]) -> int:
+def extract_video_duration(video_path: Union[str, Path]) -> int:
     """
     Extract the duration of a video
     :param video_path: The path to the video
@@ -343,7 +341,8 @@ def extract_video_duration(video_path: typing.Union[str, Path]) -> int:
 
 
 def extract_video_frame_at_t(
-        video_path: typing.Union[str, Path], timestamp_seconds: int
+    video_path: Union[str, Path],
+    timestamp_seconds: int,
 ) -> PILImageType:
     """
     Extract a frame at a specific timestamp
@@ -357,13 +356,15 @@ def extract_video_frame_at_t(
     vidcap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
     ret, frame = vidcap.read()
     if not ret:
-        raise ValueError(f"Could not extract frame at timestamp {timestamp_seconds}")
+        raise ValueError(f"""
+                         Could not extract frame at timestamp {timestamp_seconds}
+                         """)
     vidcap.release()
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     return PILImage.fromarray(frame)
 
 
-def beautify_file_size(size_in_bytes: int) -> str:
+def beautify_file_size(size_in_bytes: float) -> str:
     """
     Convert size in bytes to human readable format
     :param size: Size in bytes
@@ -382,13 +383,13 @@ def beautify_file_size(size_in_bytes: int) -> str:
     return f"{size:.2f} {units[unit_index]}"
 
 
-def get_file_size(file_path: typing.Union[str, Path]):
+def get_file_size(file_path: Union[str, Path]) -> int:
     # Use os.path.getsize() to get the file size in bytes
     size_in_bytes = os.path.getsize(file_path)
     return size_in_bytes
 
 
-def get_github_repo_available_branches(remote_url):
+def get_github_repo_available_branches(remote_url: str) -> List[str]:
     """
     Get the available branches in a github repository
     :param remote_url:
@@ -400,7 +401,7 @@ def get_github_repo_available_branches(remote_url):
     return branches
 
 
-def check_github_repo_branch_exists(remote_url, branch_name):
+def check_github_repo_branch_exists(remote_url: str, branch_name: str) -> bool:
     # List all branches from the remote repository
     branches = get_github_repo_available_branches(remote_url)
 
@@ -408,9 +409,9 @@ def check_github_repo_branch_exists(remote_url, branch_name):
     return branch_name in branches
 
 
-def split_and_label_prompt_parts_from_string(input_string):
+def split_and_label_prompt_parts_from_string(input_string: str) -> List:
     # This regex looks for substrings that are either inside brackets (considered files) or are not brackets and commas (considered text).
-    pattern = r'\[([^\]]+)\]|([^[\]]+)'
+    pattern = r"\[([^\]]+)\]|([^[\]]+)"
 
     # Find all matches of the pattern in the input string
     matches = re.findall(pattern, input_string)
@@ -431,7 +432,9 @@ def split_and_label_prompt_parts_from_string(input_string):
 
 
 def create_video_thumbnail(
-        video_path: typing.Union[str, Path], thumbnail_size: tuple = (128, 128), t=0
+    video_path: Union[str, Path],
+    thumbnail_size: tuple = (128, 128),
+    t=0,
 ) -> PILImageType:
     """
     Create a thumbnail for a video
@@ -452,7 +455,8 @@ def create_video_thumbnail(
 
 
 def create_image_thumbnail(
-        image_path: typing.Union[str, Path], thumbnail_size: tuple = (128, 128)
+    image_path: Union[str, Path],
+    thumbnail_size: tuple = (128, 128),
 ) -> PILImageType:
     """
     Create a thumbnail for an image
@@ -469,12 +473,12 @@ def create_image_thumbnail(
     return pil_image
 
 
-def get_expire_time():
+def get_expire_time() -> float:
     """
     Get the expiration time for the cache
     """
     now = datetime.now()
     future = now + timedelta(days=1)
     delta_t = future - now
-    delta_t = delta_t.total_seconds()
-    return delta_t
+    delta_t_seconds = delta_t.total_seconds()
+    return delta_t_seconds

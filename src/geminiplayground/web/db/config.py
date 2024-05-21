@@ -1,8 +1,7 @@
 import os
 
-from pydantic_settings import BaseSettings
-
 from geminiplayground.utils import get_gemini_playground_cache_dir
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):

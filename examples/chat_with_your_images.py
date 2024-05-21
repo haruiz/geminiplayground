@@ -1,9 +1,11 @@
-from rich import print
-
+from dotenv import find_dotenv
+from dotenv import load_dotenv
 from geminiplayground.core import GeminiClient
 from geminiplayground.parts import ImageFile
-from geminiplayground.schemas import GenerateRequestParts, TextPart, GenerateRequest
-from dotenv import load_dotenv, find_dotenv
+from geminiplayground.schemas import GenerateRequest
+from geminiplayground.schemas import GenerateRequestParts
+from geminiplayground.schemas import TextPart
+from rich import print
 
 load_dotenv(find_dotenv())
 

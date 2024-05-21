@@ -1,34 +1,38 @@
 import contextlib
-from typing import Any, AsyncIterator
-
-from sqlalchemy import event, NullPool
-from sqlalchemy.ext.asyncio import (
-    AsyncConnection,
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
+from typing import Any
+from typing import AsyncIterator
 
 from geminiplayground.utils import Singleton
+from sqlalchemy import event
+from sqlalchemy import NullPool
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncConnection
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine
+
 from .config import settings
 from .registry import mapper_registry
 
 
 # https://medium.com/@tclaitken/setting-up-a-fastapi-app-with-async-sqlalchemy-2-0-pydantic-v2-e6c540be4308
 
+
 class SessionManager(metaclass=Singleton):
-    def __init__(self, url: str,
-                 enable_foreign_keys: bool = True,
-                 autocommit: bool = False,
-                 autflush: bool = False,
-                 expire_on_commit: bool = False,
-                 engine_kwargs: Any = None
-                 ):
+    def __init__(
+        self,
+        url: str,
+        enable_foreign_keys: bool = True,
+        autocommit: bool = False,
+        autflush: bool = False,
+        expire_on_commit: bool = False,
+        engine_kwargs: Any = None,
+    ):
         if engine_kwargs is None:
             engine_kwargs = {}
 
         self._engine = create_async_engine(url, **engine_kwargs)
         if enable_foreign_keys:
+
             @event.listens_for(self._engine.sync_engine, "connect")
             def _fk_pragma_on_connect(dbapi_con, con_record):
                 dbapi_con.execute("pragma foreign_keys=ON")
@@ -37,7 +41,8 @@ class SessionManager(metaclass=Singleton):
             autocommit=autocommit,
             autoflush=autflush,
             expire_on_commit=expire_on_commit,
-            bind=self._engine)
+            bind=self._engine,
+        )
 
     async def init(self, drop_all: bool = False):
         print("Initializing DatabaseSessionManager")
@@ -90,7 +95,8 @@ sessionmanager = SessionManager(
         "poolclass": NullPool,
         "pool_recycle": 3600,
         "future": True,
-    })
+    },
+)
 
 
 async def get_db_session():

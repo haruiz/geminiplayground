@@ -1,11 +1,12 @@
 from pathlib import Path
 
+from dotenv import find_dotenv
+from dotenv import load_dotenv
 from geminiplayground.catching import cache
 from geminiplayground.core import GeminiClient
-from geminiplayground.parts import ImageFile, VideoFile
+from geminiplayground.parts import ImageFile
+from geminiplayground.parts import VideoFile
 from rich import print
-
-from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())
 
@@ -43,7 +44,7 @@ def cache_video_file():
         print(part)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # clear cache
     cache.clear()
     # cache_image_file()

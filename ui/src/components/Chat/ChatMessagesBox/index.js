@@ -125,4 +125,3 @@ export default function ChatMessagesBox({messages = [], onClearChatQueue = null}
         </div>
     )
 }
-

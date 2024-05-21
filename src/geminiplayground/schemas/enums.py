@@ -10,9 +10,15 @@ class HarmCategory(str, Enum):
 
 class HarmBlockThreshold(str, Enum):
     HARM_BLOCK_THRESHOLD_UNSPECIFIED = "HARM_BLOCK_THRESHOLD_UNSPECIFIED"
-    BLOCK_LOW_AND_ABOVE = "BLOCK_LOW_AND_ABOVE"  # Content with NEGLIGIBLE will be allowed.
-    BLOCK_MEDIUM_AND_ABOVE = "BLOCK_MEDIUM_AND_ABOVE"  # Content with NEGLIGIBLE and LOW will be allowed.
-    BLOCK_ONLY_HIGH = "BLOCK_ONLY_HIGH"  # Content with NEGLIGIBLE, LOW, and MEDIUM will be allowed.
+    BLOCK_LOW_AND_ABOVE = (
+        "BLOCK_LOW_AND_ABOVE"  # Content with NEGLIGIBLE will be allowed.
+    )
+    BLOCK_MEDIUM_AND_ABOVE = (
+        "BLOCK_MEDIUM_AND_ABOVE"  # Content with NEGLIGIBLE and LOW will be allowed.
+    )
+    BLOCK_ONLY_HIGH = (
+        "BLOCK_ONLY_HIGH"  # Content with NEGLIGIBLE, LOW, and MEDIUM will be allowed.
+    )
     BLOCK_NONE = "BLOCK_NONE"  # All content will be allowed.
 
 

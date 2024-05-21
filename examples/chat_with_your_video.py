@@ -1,9 +1,11 @@
-from rich import print
-
+from dotenv import find_dotenv
+from dotenv import load_dotenv
 from geminiplayground.core import GeminiClient
 from geminiplayground.parts import VideoFile
-from geminiplayground.schemas import GenerateRequestParts, TextPart, GenerateRequest
-from dotenv import load_dotenv, find_dotenv
+from geminiplayground.schemas import GenerateRequest
+from geminiplayground.schemas import GenerateRequestParts
+from geminiplayground.schemas import TextPart
+from rich import print
 
 load_dotenv(find_dotenv())
 
@@ -19,19 +21,13 @@ def chat_wit_your_video():
     video_file_path = "./../data/transformers-explained.mp4"
     video_file = VideoFile(video_file_path, gemini_client=gemini_client)
     video_parts = video_file.content_parts()
-    video_files = video_file.files[-4:]
     for part in video_parts[:5]:
         print(part)
 
     request_parts = GenerateRequestParts(
-        parts=[
-            TextPart(text="What is the following video about?"),
-            *video_parts
-        ]
+        parts=[TextPart(text="What is the following video about?"), *video_parts]
     )
-    request = GenerateRequest(
-        contents=[request_parts]
-    )
+    request = GenerateRequest(contents=[request_parts])
     tokens_count = gemini_client.get_tokens_count(model, request)
     print("Tokens count: ", tokens_count)
     response = gemini_client.generate_response(model, request)

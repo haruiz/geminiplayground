@@ -1,8 +1,7 @@
 import logging
 
-from rich.logging import RichHandler
-
 from geminiplayground.core import GeminiClient
+from rich.logging import RichHandler
 
 FORMAT = "%(message)s"
 logging.basicConfig(

@@ -1,6 +1,7 @@
 from enum import Enum
 
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import mapped_column
 
 from .registry import mapper_registry as reg
 
@@ -9,6 +10,7 @@ class EntryStatus(Enum):
     """
     Upload status enum.
     """
+
     PENDING = "pending"
     READY = "ready"
     ERROR = "error"

@@ -1,5 +1,6 @@
+from dotenv import find_dotenv
+from dotenv import load_dotenv
 from geminiplayground import GeminiClient
-from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())
 

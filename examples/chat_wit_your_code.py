@@ -1,9 +1,11 @@
-from rich import print
-
+from dotenv import find_dotenv
+from dotenv import load_dotenv
 from geminiplayground.core import GeminiClient
 from geminiplayground.parts.git_repo_part import GitRepo
-from geminiplayground.schemas import GenerateRequestParts, TextPart, GenerateRequest
-from dotenv import load_dotenv, find_dotenv
+from geminiplayground.schemas import GenerateRequest
+from geminiplayground.schemas import GenerateRequestParts
+from geminiplayground.schemas import TextPart
+from rich import print
 
 load_dotenv(find_dotenv())
 
@@ -27,7 +29,9 @@ def chat_wit_your_code():
         parts=[
             TextPart(text="use this codebase:"),
             *repo_parts,
-            TextPart(text="Describe the `bigram.py` file, and generate some code snippets"),
+            TextPart(
+                text="Describe the `bigram.py` file, and generate some code snippets"
+            ),
         ]
     )
     request = GenerateRequest(contents=[request_parts])

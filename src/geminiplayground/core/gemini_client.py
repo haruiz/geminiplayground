@@ -8,24 +8,20 @@ from time import sleep
 import googleapiclient
 import pydantic
 import requests
-from googleapiclient.discovery import build
+from geminiplayground.schemas import ChatHistory
+from geminiplayground.schemas import ChatMessage
+from geminiplayground.schemas import TextPart
+from geminiplayground.schemas.extra_schemas import UploadFile
+from geminiplayground.schemas.request_schemas import GenerateRequest
+from geminiplayground.schemas.request_schemas import GenerateRequestParts
+from geminiplayground.schemas.response_schemas import CandidatesSchema
+from geminiplayground.schemas.response_schemas import FileInfo
+from geminiplayground.schemas.response_schemas import ModelInfo
+from geminiplayground.utils import Singleton
 from googleapiclient.errors import HttpError
 from rich.console import Console
 from rich.table import Table
 from tqdm import tqdm
-
-from geminiplayground.schemas import ChatHistory, ChatMessage, TextPart
-from geminiplayground.schemas.extra_schemas import UploadFile
-from geminiplayground.schemas.request_schemas import (
-    GenerateRequestParts,
-    GenerateRequest,
-)
-from geminiplayground.schemas.response_schemas import (
-    FileInfo,
-    ModelInfo,
-    CandidatesSchema,
-)
-from geminiplayground.utils import Singleton
 
 logger = logging.getLogger("rich")
 
@@ -43,7 +39,7 @@ def handle_exceptions(func):
             return func(*args, **kwargs)
         except HttpError as e:
             if e.resp.status == 404 or e.resp.status == 403:
-                logger.error(f"Resource not found, or access denied.")
+                logger.error("Resource not found, or access denied.")
             elif e.resp.status == 429:
                 logger.error(
                     "Rate limit exceeded. Please wait a few minutes before trying again."
@@ -76,8 +72,9 @@ class ChatSession:
         try:
             user_prompt = self.client.normalize_prompt(user_prompt)
             self.history.append(ChatMessage(role="user", parts=user_prompt))
-            model_response = self.client.generate_response(self.model, ChatHistory(messages=self.history),
-                                                           stream=stream, **kwargs)
+            model_response = self.client.generate_response(
+                self.model, ChatHistory(messages=self.history), stream=stream, **kwargs
+            )
             if stream:
                 message_parts = []
                 for chunk_response in model_response:
@@ -87,7 +84,9 @@ class ChatSession:
                 message_parts = [TextPart(text=squeezed_response)]
                 self.history.append(ChatMessage(role="model", parts=message_parts))
             else:
-                model_response = self.client.generate(self.model, ChatHistory(messages=self.history))
+                model_response = self.client.generate(
+                    self.model, ChatHistory(messages=self.history)
+                )
                 message_parts = model_response.candidates[0].content.parts
                 self.history.append(ChatMessage(role="model", parts=message_parts))
                 return model_response
@@ -155,7 +154,9 @@ class GeminiClient(metaclass=Singleton):
         return models
 
     @handle_exceptions
-    def query_files(self, query_fn: typing.Callable = None, limit: int = None):
+    def query_files(
+        self, query_fn: typing.Callable | None = None, limit: int | None = None
+    ):
         """
         List files in Gemini.
         :return:
@@ -164,7 +165,7 @@ class GeminiClient(metaclass=Singleton):
         page_token = None
         while True:
             # Add conditional parameters only if they are needed
-            request_params = {}
+            request_params: dict = {}
             if page_token is not None:
                 request_params["pageToken"] = page_token
             response = self.genai_service.files().list(**request_params).execute()
@@ -245,7 +246,7 @@ class GeminiClient(metaclass=Singleton):
         :return:
         """
 
-        files = [file.name if isinstance(file, FileInfo) else file for file in files]
+        files = [file.name if isinstance(file, FileInfo) else file for file in files]  # type: ignore
         for file in tqdm(files, desc="Removing files"):
             sleep(timeout)
             self.delete_file(file)
@@ -293,7 +294,8 @@ class GeminiClient(metaclass=Singleton):
         response = (
             self.genai_service.models()
             .countTokens(
-                model=model, body=generate_request.dict(exclude_none=True, by_alias=True)
+                model=model,
+                body=generate_request.dict(exclude_none=True, by_alias=True),
             )
             .execute()
         )
@@ -301,10 +303,10 @@ class GeminiClient(metaclass=Singleton):
 
     @handle_exceptions
     def generate(
-            self,
-            model: str,
-            prompt: GenerateRequest | ChatHistory | list | str | dict,
-            **kwargs,
+        self,
+        model: str,
+        prompt: GenerateRequest | ChatHistory | list | str | dict,
+        **kwargs,
     ) -> CandidatesSchema:
         """
         Generate a response from a prompt.
@@ -318,7 +320,8 @@ class GeminiClient(metaclass=Singleton):
             response = (
                 self.genai_service.models()
                 .generateContent(
-                    model=model, body=generate_request.dict(exclude_none=True, by_alias=True)
+                    model=model,
+                    body=generate_request.dict(exclude_none=True, by_alias=True),
                 )
                 .execute()
             )
@@ -347,9 +350,11 @@ class GeminiClient(metaclass=Singleton):
         response = (
             self.genai_service.models()
             .streamGenerateContent(
-                model=model, body=generate_request.dict(exclude_none=True, by_alias=True), alt="json"
-            ).
-            execute()
+                model=model,
+                body=generate_request.dict(exclude_none=True, by_alias=True),
+                alt="json",
+            )
+            .execute()
         )
         for chunk in response:
             if timeout:
@@ -358,9 +363,9 @@ class GeminiClient(metaclass=Singleton):
             yield chunk_response
 
     def __mk_generative_request(self, prompt, **kwargs):
-        assert isinstance(prompt,
-                          (GenerateRequest, ChatHistory, list,
-                           str)), "Prompt must be a GenerateRequest, ChatHistory, list, or str"
+        assert isinstance(
+            prompt, (GenerateRequest, ChatHistory, list, str)
+        ), "Prompt must be a GenerateRequest, ChatHistory, list, or str"
         if isinstance(prompt, GenerateRequest):
             generate_request = prompt
         elif isinstance(prompt, ChatHistory):
@@ -378,8 +383,13 @@ class GeminiClient(metaclass=Singleton):
             generate_request.safety_settings = safety_settings
         return generate_request
 
-    def generate_response(self, model: str, prompt: GenerateRequest | list | str | dict, stream: bool = False,
-                          **kwargs):
+    def generate_response(
+        self,
+        model: str,
+        prompt: GenerateRequest | list | str | dict,
+        stream: bool = False,
+        **kwargs,
+    ):
         """
         Generate a response from a prompt.
         :param stream:  Whether to stream the response

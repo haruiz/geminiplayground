@@ -1,9 +1,13 @@
 import typing
 from typing import List
 
-from pydantic import BaseModel, Field
-from .enums import HarmCategory, HarmBlockThreshold
-from .parts_schemas import FilePart, TextPart
+from pydantic import BaseModel
+from pydantic import Field
+
+from .enums import HarmBlockThreshold
+from .enums import HarmCategory
+from .parts_schemas import FilePart
+from .parts_schemas import TextPart
 
 
 class GenerationSettings(BaseModel):
@@ -16,18 +20,18 @@ class GenerationSettings(BaseModel):
         None,
         alias="candidateCount",
         description="Number of generated responses to return.This value must be between [1, 8], inclusive. If unset, "
-                    "this will default to 1.",
+        "this will default to 1.",
     )
     max_output_tokens: typing.Optional[int] = Field(
         None,
         alias="maxOutputTokens",
         description="The maximum number of tokens to generate. The default value varies by model, see the "
-                    "Model.output_token_limit attribute of the Model returned from the getModel function.",
+        "Model.output_token_limit attribute of the Model returned from the getModel function.",
     )
     temperature: typing.Optional[float] = Field(
         None,
         description="Controls randomness in generation. Lower values make the model more deterministic. High "
-                    "values make the model more creative.",
+        "values make the model more creative.",
     )
     top_p: typing.Optional[float] = Field(
         None,
@@ -72,9 +76,7 @@ class ChatHistory(BaseModel):
 
 
 class GenerateRequestParts(BaseModel):
-    parts: list[TextPart | FilePart] = Field(
-        ..., description="Parts of the request."
-    )
+    parts: list[TextPart | FilePart] = Field(..., description="Parts of the request.")
 
     class Config:
         populate_by_name = True

@@ -14,7 +14,6 @@ def chat_wit_your_audios():
     """
     gemini_client = GeminiClient()
     model = "models/gemini-1.5-pro-latest"
-
     audio_file_path = "<your audio file>.mp3"
     audio_file = AudioFile(audio_file_path, gemini_client=gemini_client)
     # audio_file.delete()

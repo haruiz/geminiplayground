@@ -80,15 +80,22 @@ class ChatSession:
         :param kwargs: Additional arguments
         """
         try:
+
             user_prompt = self.client.normalize_prompt(user_prompt)
             self.history.append(ChatMessage(role="user", parts=user_prompt))
+
             model_response = self.client.generate_response(self.model, ChatHistory(messages=self.history),
                                                            stream=stream, **kwargs)
             if stream:
                 message_parts = []
                 for chunk_response in model_response:
+                    chunk_response_candidate = chunk_response.candidates[0]
+                    chunk_response_content = chunk_response_candidate.content
+                    if chunk_response_content:
+                        message_parts.extend(chunk_response_content.parts)
+                    else:
+                        raise ValueError(json.dumps(chunk_response.dict(), indent=2))
                     yield chunk_response
-                    message_parts.extend(chunk_response.candidates[0].content.parts)
                 squeezed_response = "".join([part.text for part in message_parts])
                 message_parts = [TextPart(text=squeezed_response)]
                 self.history.append(ChatMessage(role="model", parts=message_parts))
@@ -378,6 +385,7 @@ class GeminiClient(metaclass=Singleton):
             prompt = self.normalize_prompt(prompt)
             generate_request = GenerateRequest(
                 contents=[GenerateRequestParts(parts=prompt)]
+
             )
         generation_config = kwargs.get("generation_config", None)
         safety_settings = kwargs.get("safety_settings", None)
@@ -385,6 +393,7 @@ class GeminiClient(metaclass=Singleton):
             generate_request.generation_config = generation_config
         if safety_settings is not None:
             generate_request.safety_settings = safety_settings
+
         return generate_request
 
     def generate_response(self, model: str, prompt: GenerateRequest | list | str | dict, stream: bool = False,

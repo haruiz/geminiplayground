@@ -312,6 +312,7 @@ async def websocket_receiver(websocket: WebSocket):
             data = await websocket.receive_json()
             event = data.get("event")
             data = data.get("data")
+
             match event:
                 case "generate_response":
                     generate_prompt = data.get("message")
@@ -320,8 +321,6 @@ async def websocket_receiver(websocket: WebSocket):
                     try:
                         chat = gemini_client.start_chat(model=generative_model, history=chat_history)
                         prompt_parts = await get_parts_from_prompt_text(generate_prompt)
-                        logger.info(f"Prompt parts: {len(prompt_parts)}")
-
                         generate_response = await run_in_threadpool(lambda: chat.generate_response(prompt_parts,
                                                                                                    stream=True,
                                                                                                    generation_config=GenerationSettings(

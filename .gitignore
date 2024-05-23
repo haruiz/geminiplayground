@@ -15,6 +15,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+poetry.lock
 lib64/
 sdist/
 var/

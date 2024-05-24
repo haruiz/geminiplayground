@@ -267,12 +267,13 @@ def TemporaryFile(suffix="tmp"):
     Create a temporary file
     :param suffix:
     """
-    unique_name = next(tempfile._get_candidate_names())
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix, prefix=unique_name)
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+
     file_name = tmp.name
     try:
         yield file_name
     finally:
+        tmp.close()
         os.unlink(file_name)
 
 

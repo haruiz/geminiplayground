@@ -31,7 +31,6 @@ const Provider = ({ children }) => {
       <ThemeProvider
           attribute="class"
           defaultTheme="dark"
-          enableSystem
           disableTransitionOnChange
       >
       <QueryClientProvider client={queryClient}>

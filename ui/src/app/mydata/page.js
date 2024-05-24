@@ -17,6 +17,14 @@ import {axiosInstance} from "@/app/axios";
 import DataTable from "@/components/DataTable";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import {Badge} from "@/components/ui/badge"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+
+
 
 const FilesTable = forwardRef(function FilesTable({...rest}, ref) {
 
@@ -58,9 +66,24 @@ const FilesTable = forwardRef(function FilesTable({...rest}, ref) {
         {
             header: "Status",
             cell: ({row}) => {
+                console.log(row.original)
                 const status = row.original.status
+                const statusMessage = row.original.statusMessage
+                if (status === "ready" || status === "pending") {
+                    return <Badge variant="secondary">{status}</Badge>
+                }
                 return (
-                    <Badge variant={status === "ready" ? "secondary" : "destructive"}>{status}</Badge>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Badge variant="destructive"
+                           style={{cursor:"pointer"}}>{status}</Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{statusMessage}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                 )
             }
         },
@@ -108,7 +131,8 @@ const FilesTable = forwardRef(function FilesTable({...rest}, ref) {
         return {
             name: item.name,
             type: item.content_type,
-            status: item.status
+            status: item.status,
+            statusMessage: item.status_message
         }
     }) : []
     return (

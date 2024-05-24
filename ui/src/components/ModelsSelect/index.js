@@ -31,7 +31,7 @@ export default function ModelsSelect({...props}) {
     });
 
 
-    return (<Select {...props}>
+    return (<Select {...props} >
         <FormControl>
         <SelectTrigger
             className="flex items-stretch [&_[data-description]]:hidden [&_[data-displayname]]:group-hover:flex min-w-[300px]">

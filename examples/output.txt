@@ -1,0 +1,91 @@
+## Bigram Language Model (`bigram.py`)
+
+This file implements a simple bigram language model using PyTorch. It reads a text file (Shakespeare's works in this case), learns the probability of a character appearing given the previous character, and then generates new text based on these learned probabilities.
+
+Here's a breakdown of the code and some interesting snippets:
+
+**1. Data Preparation**
+
+- **Character Encoding:**
+```python
+chars = sorted(list(set(text)))
+vocab_size = len(chars)
+stoi = { ch:i for i,ch in enumerate(chars) }
+itos = { i:ch for i,ch in enumerate(chars) }
+encode = lambda s: [stoi[c] for c in s] 
+decode = lambda l: ''.join([itos[i] for i in l]) 
+```
+
+This part creates a vocabulary of unique characters in the text, then defines encoding and decoding functions to convert between characters and their numerical representations.
+
+- **Dataset Splitting and Batching:**
+```python
+data = torch.tensor(encode(text), dtype=torch.long)
+n = int(0.9*len(data)) 
+train_data = data[:n]
+val_data = data[n:]
+
+def get_batch(split):
+    data = train_data if split == 'train' else val_data
+    ix = torch.randint(len(data) - block_size, (batch_size,))
+    x = torch.stack([data[i:i+block_size] for i in ix])
+    y = torch.stack([data[i+1:i+block_size+1] for i in ix])
+    x, y = x.to(device), y.to(device)
+    return x, y
+```
+
+Here, the data is split into training and validation sets. The `get_batch` function efficiently creates random batches of input sequences (`x`) and their corresponding target sequences (`y`), shifted by one character.
+
+**2. Model Definition**
+
+```python
+class BigramLanguageModel(nn.Module):
+
+    def __init__(self, vocab_size):
+        super().__init__()
+        self.token_embedding_table = nn.Embedding(vocab_size, vocab_size)
+
+    def forward(self, idx, targets=None):
+        logits = self.token_embedding_table(idx)
+
+        if targets is None:
+            loss = None
+        else:
+            B, T, C = logits.shape
+            logits = logits.view(B*T, C)
+            targets = targets.view(B*T)
+            loss = F.cross_entropy(logits, targets)
+
+        return logits, loss
+
+    def generate(self, idx, max_new_tokens):
+        for _ in range(max_new_tokens):
+            logits, loss = self(idx)
+            logits = logits[:, -1, :] 
+            probs = F.softmax(logits, dim=-1) 
+            idx_next = torch.multinomial(probs, num_samples=1) 
+            idx = torch.cat((idx, idx_next), dim=1) 
+        return idx
+```
+
+This snippet defines the bigram model. It consists of an embedding layer (`token_embedding_table`) which directly maps each character to a vector of size `vocab_size`. The `forward` method calculates the logits representing the probabilities for the next character. The `generate` method samples from these probabilities to generate new text.
+
+**3. Training and Generation**
+
+The code then initializes the model and optimizer, trains the model using cross-entropy loss, and finally generates text using the trained model.
+
+```python
+model = BigramLanguageModel(vocab_size)
+m = model.to(device)
+optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
+
+# ... (training loop)
+
+context = torch.zeros((1, 1), dtype=torch.long, device=device)
+print(decode(m.generate(context, max_new_tokens=500)[0].tolist()))
+```
+
+This snippet showcases the initialization, training loop call, and the text generation part using the trained model.
+
+Overall, this file provides a concise and clear example of implementing a basic language model using PyTorch. 
+

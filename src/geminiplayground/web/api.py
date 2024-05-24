@@ -185,6 +185,7 @@ async def upload_file(session: AsyncSession, file_path: Path, content_type: str)
         await run_in_threadpool(multimodal_part.upload)
         logger.info(f"Uploaded file {file_path}")
         part.status = EntryStatus.READY
+        part.status_message = ""
     except Exception as e:
         logger.error(f"Error processing file {file_path}: {str(e)}")
         part.status = EntryStatus.ERROR
@@ -233,7 +234,8 @@ async def upload_file_handler(request: Request, background_tasks: BackgroundTask
             name=file_name,
             content_type=content_type
         )
-        db_session.add(new_part)
+
+        await db_session.merge(new_part)
         await db_session.commit()
         background_tasks.add_task(upload_file_task, file_path, content_type)
         return JSONResponse(content={"content": "File uploaded"})

@@ -2,7 +2,10 @@ from sqlalchemy import select
 
 from geminiplayground.parts import MultimodalPartFactory, GitRepo
 from geminiplayground.schemas import TextPart
-from geminiplayground.utils import split_and_label_prompt_parts_from_string, get_gemini_playground_cache_dir
+from geminiplayground.utils import (
+    split_and_label_prompt_parts_from_string,
+    get_gemini_playground_cache_dir,
+)
 from geminiplayground.web.db.models import MultimodalPartEntry
 from geminiplayground.web.db.session_manager import get_db_session
 
@@ -30,7 +33,11 @@ async def get_parts_from_prompt_text(prompt):
 
     # Process multimodal parts concurrently
     multimodal_results = await gather(
-        *[process_multimodal_part(part, files_dir, repos_dir) for part in multimodal_parts])
+        *[
+            process_multimodal_part(part, files_dir, repos_dir)
+            for part in multimodal_parts
+        ]
+    )
     for result in multimodal_results:
         parts.extend(result)
 
@@ -48,7 +55,10 @@ async def process_multimodal_part(part, files_dir, repos_dir):
     parts = []
     async for session in get_db_session():
         part_entry = await session.execute(
-            select(MultimodalPartEntry).filter(MultimodalPartEntry.name == part["value"]))
+            select(MultimodalPartEntry).filter(
+                MultimodalPartEntry.name == part["value"]
+            )
+        )
         part_entry = part_entry.scalars().first()
         if part_entry:
             content_type = part_entry.content_type
@@ -58,7 +68,10 @@ async def process_multimodal_part(part, files_dir, repos_dir):
                 parts.extend(multimodal_part.content_parts())
             elif content_type == "repo":
                 repo_folder = repos_dir.joinpath(part_entry.name)
-                repo = GitRepo.from_folder(repo_folder, config={"content": "code-files", "file_extensions": [".py"]})
+                repo = GitRepo.from_folder(
+                    repo_folder,
+                    config={"content": "code-files", "file_extensions": [".py"]},
+                )
                 parts.extend(repo.content_parts())
             else:
                 raise ValueError(f"Unsupported content type: {content_type}")

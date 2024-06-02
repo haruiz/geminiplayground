@@ -144,7 +144,7 @@ def chat_wit_your_code():
     )
     model = "models/gemini-1.5-pro-latest"
     gemini_client = GeminiClient()
-    tokens_count = gemini_client.get_tokens_count(model, request)
+    tokens_count = gemini_client.count_tokens(model, request)
     print("Tokens count: ", tokens_count)
     response = gemini_client.generate_response(model, request)
 
@@ -195,7 +195,7 @@ def chat_wit_your_video():
             request_parts
         ]
     )
-    tokens_count = gemini_client.get_tokens_count(model, request)
+    tokens_count = gemini_client.count_tokens(model, request)
     print("Tokens count: ", tokens_count)
     response = gemini_client.generate_response(model, request)
 
@@ -246,7 +246,7 @@ def chat_wit_your_images():
         ],
 
     )
-    tokens_count = gemini_client.get_tokens_count(model, request)
+    tokens_count = gemini_client.count_tokens(model, request)
     print("Tokens count: ", tokens_count)
     response = gemini_client.generate_response(model, request)
 

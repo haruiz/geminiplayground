@@ -7,15 +7,12 @@ from github import Github
 import git
 from geminiplayground.core import GeminiClient
 from geminiplayground.utils import (
-    check_github_repo_branch_exists,
-    folder_contains_git_repo,
-    get_code_files_in_dir,
-    get_github_repo_available_branches,
-    get_gemini_playground_cache_dir,
-    get_repo_name_from_url,
-    GitRemoteProgress
+    GitUtils,
+    GitRemoteProgress,
+    LibUtils,
 )
-from .multimodal_part import MultimodalPart
+from ..multimodal_part import MultimodalPart
+import codecs
 
 logger = logging.getLogger("rich")
 
@@ -36,7 +33,9 @@ class GitRepo(MultimodalPart):
             logger.info(f"Checking if {repo_folder} is a git repository")
 
             assert repo_folder.exists(), f"{repo_folder} does not exist"
-            assert folder_contains_git_repo(repo_folder), f"{repo_folder} is not a git repository"
+            assert GitUtils.folder_contains_git_repo(
+                repo_folder
+            ), f"{repo_folder} is not a git repository"
 
             self.repo_folder = repo_folder
             self.repo = git.Repo(repo_folder)
@@ -51,7 +50,9 @@ class GitRepo(MultimodalPart):
 
             valid_contents = {"code-files", "issues"}
             if self.content not in valid_contents:
-                raise ValueError(f"Invalid content {self.content}, should be code-files or issues")
+                raise ValueError(
+                    f"Invalid content {self.content}, should be code-files or issues"
+                )
         except Exception as e:
             logger.error(e)
             raise e
@@ -76,20 +77,22 @@ class GitRepo(MultimodalPart):
         :param kwargs: additional arguments to pass to the GitRepo constructor
         :return:
         """
-        playground_cache_dir = get_gemini_playground_cache_dir()
-        default_repos_folder = playground_cache_dir.joinpath("repos")
+        playground_home = LibUtils.get_lib_home()
+        default_repos_folder = playground_home.joinpath("repos")
         repos_folder = kwargs.get("repos_folder", default_repos_folder)
         repos_folder = Path(repos_folder)
         repos_folder.mkdir(parents=True, exist_ok=True)
 
-        repo_name = get_repo_name_from_url(repo_url)
+        repo_name = GitUtils.get_repo_name_from_url(repo_url)
         repo_folder = repos_folder.joinpath(repo_name)
         repo_folder.mkdir(parents=True, exist_ok=True)
 
-        if not check_github_repo_branch_exists(repo_url, branch):
-            available_branches = get_github_repo_available_branches(repo_url)
-            error_message = (f"Branch {branch} does not exist in {repo_url}. "
-                             f"Available branches for the repository {repo_name} are: {available_branches}")
+        if not GitUtils.check_github_repo_branch_exists(repo_url, branch):
+            available_branches = GitUtils.get_github_repo_available_branches(repo_url)
+            error_message = (
+                f"Branch {branch} does not exist in {repo_url}. "
+                f"Available branches for the repository {repo_name} are: {available_branches}"
+            )
             logger.error(error_message)
             raise GitRepoBranchNotFoundException(error_message)
 
@@ -114,17 +117,24 @@ class GitRepo(MultimodalPart):
         Get the code parts from the repo
         :return:
         """
-        from geminiplayground.schemas.parts_schemas import TextPart
         file_extensions = self.config.get("file_extensions", None)
         exclude_dirs = self.config.get("exclude_dirs", None)
 
-        code_files = get_code_files_in_dir(self.repo_folder, file_extensions, exclude_dirs)
+        code_files = GitUtils.get_code_files_in_dir(
+            self.repo_folder, file_extensions, exclude_dirs
+        )
         parts = []
         for file in code_files:
-            with open(file, "r") as f:
+            with codecs.open(file, "r", encoding="utf-8", errors="ignore") as f:
                 code_content = f.read()
-                parts.append(TextPart(text="\n" + "file: " + file.name + "\n"))
-                parts.append(TextPart(text=code_content))
+                parts.append(
+                    f"""
+                file: {file}
+                ```python
+                {code_content}
+                ```
+                """
+                )
         return parts
 
     def __get_parts_from_repos_issues(self):
@@ -132,7 +142,6 @@ class GitRepo(MultimodalPart):
         Get the issues from the repo
         :return:
         """
-        from geminiplayground.schemas.parts_schemas import TextPart
         issues_state = self.config.get("issues_state", "open")
 
         remotes = self.repo.remotes
@@ -145,7 +154,12 @@ class GitRepo(MultimodalPart):
         issues = remote_repo.get_issues(state=issues_state)
         parts = []
         for issue in issues:
-            parts.append(TextPart(text=issue.title))
+            parts.append(
+                f"""
+            issue: {issue.title}
+            {issue.body}
+            """
+            )
         return parts
 
     def content_parts(self):
@@ -156,7 +170,7 @@ class GitRepo(MultimodalPart):
         try:
             functions_map = {
                 "code-files": self.__get_parts_from_code_files,
-                "issues": self.__get_parts_from_repos_issues
+                "issues": self.__get_parts_from_repos_issues,
             }
             return functions_map[self.content]()
         except Exception as e:

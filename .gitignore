@@ -14,6 +14,9 @@ dist/
 downloads/
 eggs/
 .eggs/
+src/geminiplayground/web/files/*
+src/geminiplayground/web/files/thumbnail_audio.png
+src/geminiplayground/web/files/thumbnail_github.png
 poetry.lock
 lib64/
 sdist/

@@ -48,22 +48,18 @@ pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://
 ```python
 from geminiplayground.core import GeminiClient
 from geminiplayground.parts import VideoFile, ImageFile
-from geminiplayground.schemas import HarmCategory, HarmBlockThreshold
 
 gemini_client = GeminiClient()
 ```
 
-3. **Upload files:**
+3. **Define your files:**
 
 ```python
-
-video_file_path = "BigBuckBunny_320x180.mp4"
+video_file_path = "./data/BigBuckBunny_320x180.mp4"
 video_file = VideoFile(video_file_path, gemini_client=gemini_client)
-video_file.upload()
 
 image_file_path = "https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png"
 image_file = ImageFile(image_file_path, gemini_client=gemini_client)
-image_file.upload()
 ```
 
 4. **Create a prompt:**
@@ -82,12 +78,7 @@ multimodal_prompt = [
 
 ```python
 response = gemini_client.generate_response("models/gemini-1.5-pro-latest", multimodal_prompt,
-                                           generation_config={"temperature": 0.0, "top_p": 1.0},
-                                           safety_settings={
-                                               "category": HarmCategory.DANGEROUS_CONTENT,
-                                               "threshold": HarmBlockThreshold.BLOCK_NONE
-                                           })
-
+                                           generation_config={"temperature": 0.0, "top_p": 1.0})
 # Print the response
 for candidate in response.candidates:
     for part in candidate.content.parts:
@@ -112,8 +103,10 @@ image is isolated on a black background.
 from rich import print
 
 from geminiplayground.core import GeminiClient
-from geminiplayground.parts.git_repo_part import GitRepo
-from geminiplayground.schemas import GenerateRequestParts, TextPart, GenerateRequest
+from geminiplayground.parts import GitRepo
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
 
 
 def chat_wit_your_code():
@@ -121,41 +114,32 @@ def chat_wit_your_code():
     Get the content parts of a github repo and generate a request.
     :return:
     """
-
-    repo = GitRepo.from_url("https://github.com/karpathy/ng-video-lecture",
-                            branch="master",
-                            config={
-                                "content": "code-files",  # "code-files" or "issues"
-                                "exclude_dirs": ["frontend", "ui"],
-                                "file_extensions": [".py"]
-                            })
-    repo_parts = repo.content_parts()
-
-    request_parts = GenerateRequestParts(parts=[
-        TextPart(text="use this codebase:"),
-        *repo_parts,
-        TextPart(
-            text="Help me to write a Readme file for this codebase."),
-    ])
-    request = GenerateRequest(
-        contents=[
-            request_parts
-        ]
+    repo = GitRepo.from_url(
+        "https://github.com/karpathy/ng-video-lecture",
+        branch="master",
+        config={
+            "content": "code-files",  # "code-files" or "issues"
+            "file_extensions": [".py"],
+        },
     )
+    prompt = [
+        "use this codebase:",
+        repo,
+        "Describe the `bigram.py` file, and generate some code snippets",
+    ]
     model = "models/gemini-1.5-pro-latest"
     gemini_client = GeminiClient()
-    tokens_count = gemini_client.count_tokens(model, request)
+    tokens_count = gemini_client.count_tokens(model, prompt)
     print("Tokens count: ", tokens_count)
-    response = gemini_client.generate_response(model, request)
+    response = gemini_client.generate_response(model, prompt, stream=True)
 
     # Print the response
-    for candidate in response.candidates:
-        for part in candidate.content.parts:
-            if part.text:
-                print(part.text)
+    for message_chunk in response:
+        if message_chunk.parts:
+            print(message_chunk.text)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     chat_wit_your_code()
 
 ```
@@ -167,7 +151,9 @@ from rich import print
 
 from geminiplayground.core import GeminiClient
 from geminiplayground.parts import VideoFile
-from geminiplayground.schemas import GenerateRequestParts, TextPart, GenerateRequest
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
 
 
 def chat_wit_your_video():
@@ -176,39 +162,28 @@ def chat_wit_your_video():
     :return:
     """
     gemini_client = GeminiClient()
-    model = "models/gemini-1.5-pro-latest"
+    model_name = "models/gemini-1.5-pro-latest"
 
-    video_file_path = "./../data/BigBuckBunny_320x180.mp4"
+    video_file_path = "./../data/transformers-explained.mp4"
     video_file = VideoFile(video_file_path, gemini_client=gemini_client)
-    video_parts = video_file.content_parts()
-    video_files = video_file.files[-4:]
-    for part in video_parts[:5]:
-        print(part)
+    keyframes = video_file.extract_keyframes()
+    print(keyframes)
 
-    request_parts = GenerateRequestParts(parts=[
-        TextPart(text="check this video?:"),
-        *video_parts,
-        TextPart(text="list the object you see in the video")
-    ])
-    request = GenerateRequest(
-        contents=[
-            request_parts
-        ]
-    )
-    tokens_count = gemini_client.count_tokens(model, request)
+    prompt = [
+        "Describe the content of the video",
+        video_file,
+        "what is the video about?",
+    ]
+    tokens_count = gemini_client.count_tokens(model_name, prompt)
     print("Tokens count: ", tokens_count)
-    response = gemini_client.generate_response(model, request)
-
-    # Print the response
-    for candidate in response.candidates:
-        for part in candidate.content.parts:
-            if part.text:
-                print(part.text)
+    response = gemini_client.generate_response(model_name, prompt, stream=True)
+    for message_chunk in response:
+        if message_chunk.parts:
+            print(message_chunk.text)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     chat_wit_your_video()
-
 ```
 
 **Chat with your images:**
@@ -218,7 +193,9 @@ from rich import print
 
 from geminiplayground.core import GeminiClient
 from geminiplayground.parts import ImageFile
-from geminiplayground.schemas import GenerateRequestParts, TextPart, GenerateRequest
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
 
 
 def chat_wit_your_images():
@@ -227,38 +204,105 @@ def chat_wit_your_images():
     :return:
     """
     gemini_client = GeminiClient()
-    model = "models/gemini-1.5-pro-latest"
 
     image_file_path = "https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png"
     image_file = ImageFile(image_file_path, gemini_client=gemini_client)
-    image_parts = image_file.content_parts()
-    image_files = image_file.files
-    print("Image files: ", image_files)
-
-    request_parts = GenerateRequestParts(parts=[
-        TextPart(text="You see this image?:"),
-        *image_parts,
-        TextPart(text="Describe what you see"),
-    ])
-    request = GenerateRequest(
-        contents=[
-            request_parts
-        ],
-
-    )
-    tokens_count = gemini_client.count_tokens(model, request)
-    print("Tokens count: ", tokens_count)
-    response = gemini_client.generate_response(model, request)
-
-    # Print the response
-    for candidate in response.candidates:
-        for part in candidate.content.parts:
-            if part.text:
-                print(part.text)
+    prompt = ["what do you see in this image?", image_file]
+    model_name = "models/gemini-1.5-pro-latest"
+    tokens_count = gemini_client.count_tokens(model_name, prompt)
+    print(f"Tokens count: {tokens_count}")
+    response = gemini_client.generate_response(model_name, prompt, stream=True)
+    for message_chunk in response:
+        if message_chunk.parts:
+            print(message_chunk.text)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     chat_wit_your_images()
+```
+
+**Chat with your Pdfs:**
+
+```python
+from rich import print
+
+from geminiplayground.core import GeminiClient
+from geminiplayground.parts import PdfFile
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
+
+
+def chat_wit_your_pdf():
+    """
+    Get the content parts of a pdf file and generate a request.
+    :return:
+    """
+    gemini_client = GeminiClient()
+    pdf_file_path = "https://www.tnstate.edu/faculty/fyao/COMP3050/Py-tutorial.pdf"
+    pdf_file = PdfFile(pdf_file_path, gemini_client=gemini_client)
+
+    prompt = ["Please create a summary of the pdf file:", pdf_file]
+    model_name = "models/gemini-1.5-pro-latest"
+    tokens_count = gemini_client.count_tokens(model_name, prompt)
+    print(f"Tokens count: {tokens_count}")
+    response = gemini_client.generate_response(model_name, prompt, stream=True)
+    for message_chunk in response:
+        if message_chunk.parts:
+            print(message_chunk.text)
+
+
+if __name__ == "__main__":
+    chat_wit_your_pdf()
+```
+
+**Function calling in chat:**
+
+```python
+from dotenv import load_dotenv, find_dotenv
+
+from geminiplayground.core import GeminiPlayground, Message
+
+load_dotenv(find_dotenv())
+
+if __name__ == "__main__":
+    playground = GeminiPlayground(
+        model="models/gemini-1.5-flash-latest"
+    )
+
+
+    @playground.tool
+    def subtract(a: int, b: int) -> int:
+        """This function only subtracts two numbers"""
+        return a - b
+
+
+    @playground.tool
+    def write_poem() -> str:
+        """write a poem"""
+        return "Roses are red, violets are blue, sugar is sweet, and so are you."
+
+
+    chat = playground.start_chat(history=[])
+    while True:
+        user_input = input("You: ")
+        if user_input == "exit":
+            print(chat.history)
+            break
+        try:
+            model_response = chat.send_message(user_input, stream=True)
+            for response_chunk in model_response:
+                if isinstance(response_chunk, Message):
+                    print(response_chunk.text, end="")
+                else:
+                    print(
+                        f"Tool: {response_chunk.tool_name}, "
+                        f"Result: {response_chunk.tool_result}"
+                    )
+            print()
+        except Exception as e:
+            print("Something went wrong: ", e)
+            break
 ```
 
 This is a basic example.Explore the codebase and documentation for more
@@ -280,7 +324,7 @@ geminiplayground ui
 or
 
 ```bash
-AISTUDIO_API_KEY=your_api_key geminiplayground
+geminiplayground ui --api-key YOUR_API_KEY
 ```
 
 This will start a local server and open the GUI in your default browser.

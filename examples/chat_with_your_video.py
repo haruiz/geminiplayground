@@ -25,8 +25,8 @@ def chat_wit_your_video():
         video_file,
         "what is the video about?",
     ]
-    # tokens_count = gemini_client.count_tokens(model_name, prompt)
-    # print("Tokens count: ", tokens_count)
+    tokens_count = gemini_client.count_tokens(model_name, prompt)
+    print("Tokens count: ", tokens_count)
     response = gemini_client.generate_response(model_name, prompt, stream=True)
     for message_chunk in response:
         if message_chunk.parts:

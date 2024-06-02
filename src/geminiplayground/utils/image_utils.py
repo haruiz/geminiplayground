@@ -1,3 +1,6 @@
+import typing
+from pathlib import Path
+
 from PIL import Image as PILImage
 from PIL.Image import Image as PILImageType
 
@@ -9,7 +12,7 @@ class ImageUtils:
 
     @staticmethod
     def create_image_thumbnail(
-        pil_image: PILImageType, thumbnail_size: tuple = (128, 128)
+            image_path: typing.Union[str, Path], thumbnail_size: tuple = (128, 128)
     ) -> PILImageType:
         """
         Create a thumbnail for an image
@@ -17,6 +20,7 @@ class ImageUtils:
         :param thumbnail_size: The size of the thumbnail
         :return:
         """
+        pil_image = PILImage.open(image_path)
         pil_image.thumbnail(thumbnail_size)
         if pil_image.mode == "RGBA":
             background = PILImage.new("RGB", pil_image.size, (255, 255, 255))

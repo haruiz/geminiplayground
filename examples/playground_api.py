@@ -1,6 +1,7 @@
 from dotenv import load_dotenv, find_dotenv
 
 from geminiplayground.core import GeminiPlayground, Message
+from geminiplayground.parts import ImageFile
 
 load_dotenv(find_dotenv())
 
@@ -12,7 +13,7 @@ if __name__ == "__main__":
 
     @playground.tool
     def subtract(a: int, b: int) -> int:
-        """return a - b, the difference between a and b"""
+        """This function only subtracts two numbers"""
         return a - b
 
 
@@ -24,9 +25,12 @@ if __name__ == "__main__":
 
     chat = playground.start_chat(history=[])
 
-    image = "https://images.unsplash.com/photo-1630484163294-4b3b3b3b3b3b"
-    chat.send_message(["can you describe this image: ", ], stream=True)
-
+    image = ImageFile("./data/dog.jpg")
+    ai_message = chat.send_message(["can you describe the following image: ", image], stream=True)
+    for response_chunk in ai_message:
+        if isinstance(response_chunk, Message):
+            print(response_chunk.text, end="")
+    print()
     while True:
         user_input = input("You: ")
         if user_input == "exit":

@@ -1,12 +1,14 @@
 import typing
 from pathlib import Path
-from typing import List
 
 from google.generativeai.types import Tool
 
 from .gemini_client import GeminiClient
 from geminiplayground.utils import LibUtils
 from pydantic import BaseModel
+import logging
+
+logger = logging.getLogger("rich")
 
 
 class ToolCall(BaseModel):
@@ -38,12 +40,11 @@ class ChatSession:
         """
         return self.chat.history
 
-    def __init__(self, model, toolbox, docs):
+    def __init__(self, model: str, history: list, toolbox: dict, **kwargs):
         self.model = model
         self.toolbox = toolbox
-        self.docs = docs
         gemini_client = GeminiClient()
-        tools_defs = [
+        tools_def = [
             Tool(
                 function_declarations=[
                     LibUtils.func_to_tool(tool_func)
@@ -51,13 +52,23 @@ class ChatSession:
                 ]
             )
         ]
-        self.chat = gemini_client.start_chat(model=self.model, tools=tools_defs)
+        self.chat = gemini_client.start_chat(
+            model=model,
+            history=history,
+            tools=tools_def, **kwargs)
 
-    def send_message(self, message: str, stream: bool = True) -> typing.Generator:
+    def clear_history(self):
+        """
+        Clear the chat history.
+        """
+        self.chat.history.clear()
+
+    def send_message(self, message: str, stream: bool = True, **kwargs) -> typing.Generator:
         """
         Send a message to the chat session.
         """
-        response = self.chat.send_message(message, stream=stream)
+        normalized_message = LibUtils.normalize_prompt(message)
+        response = self.chat.send_message(normalized_message, stream=stream, **kwargs)
         for response_chunk in response:
             for part in response_chunk.parts:
                 if fn := part.function_call:
@@ -76,26 +87,17 @@ class GeminiPlayground:
     """
 
     def __init__(
-        self, model: str, metadata_index_config: dict, files_index_config: dict
+            self, model: str
     ):
         self.model = model
-        self.playground_repository = None
         self.toolbox = {}
-        self.history = []
-
-        self.embeddings_model = None
-        self.vector_index = None
 
     def add_file(self, file: typing.Union[str, Path]):
         """
         Add a file to the playground.
         @param file: The file to add
         """
-        file = Path(file)
-        if not file.exists():
-            raise FileNotFoundError(f"File {file} not found")
-
-        return self
+        raise NotImplementedError("Not implemented yet")
 
     def add_tool(self, tool):
         """
@@ -115,8 +117,8 @@ class GeminiPlayground:
             raise ValueError(f"Function {func.__name__} must have complete type hints")
         self.toolbox[func.__name__] = func
 
-    def start_chat(self, docs: List[str] = None):
+    def start_chat(self, history: list = None, **kwargs):
         """
         Start a chat session with the playground.
         """
-        return ChatSession(self.model, self.toolbox, docs)
+        return ChatSession(self.model, history, self.toolbox, **kwargs)

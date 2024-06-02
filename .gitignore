@@ -15,13 +15,14 @@ downloads/
 eggs/
 .eggs/
 src/geminiplayground/web/files/*
-src/geminiplayground/web/files/thumbnail_audio.png
-src/geminiplayground/web/files/thumbnail_github.png
+!src/geminiplayground/web/files/thumbnail_audio.png
+!src/geminiplayground/web/files/thumbnail_github.png
 poetry.lock
 lib64/
 sdist/
 var/
 wheels/
+.cache/
 share/python-wheels/
 *.egg-info/
 .installed.cfg

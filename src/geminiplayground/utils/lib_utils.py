@@ -137,3 +137,29 @@ class LibUtils:
                 "properties": func_properties,
             },
         )
+
+    @staticmethod
+    def normalize_prompt(prompt):
+        """
+        Normalize the prompt.
+        :param prompt:
+        :return:
+        """
+        from geminiplayground.parts import MultimodalPart
+
+        normalized_prompt = []
+
+        if isinstance(prompt, str):
+            prompt = [prompt]
+
+        for part in prompt:
+            if isinstance(part, str):
+                normalized_prompt.append(part)
+            elif isinstance(part, MultimodalPart):
+                content_parts = part.content_parts()
+                normalized_prompt.extend(content_parts)
+            elif isinstance(part, File):
+                normalized_prompt.append(part)
+            else:
+                raise ValueError(f"Invalid prompt part: {part}")
+        return normalized_prompt

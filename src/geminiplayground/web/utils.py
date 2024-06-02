@@ -1,11 +1,7 @@
 from sqlalchemy import select
 
 from geminiplayground.parts import MultimodalPartFactory, GitRepo
-from geminiplayground.schemas import TextPart
-from geminiplayground.utils import (
-    split_and_label_prompt_parts_from_string,
-    get_gemini_playground_cache_dir,
-)
+from geminiplayground.utils import LibUtils
 from geminiplayground.web.db.models import MultimodalPartEntry
 from geminiplayground.web.db.session_manager import get_db_session
 
@@ -19,17 +15,16 @@ async def get_parts_from_prompt_text(prompt):
     :return: A list of parts.
     """
 
-    prompt_parts = split_and_label_prompt_parts_from_string(prompt)
-    cache_dir = get_gemini_playground_cache_dir()
-    files_dir = cache_dir
-    repos_dir = cache_dir.joinpath("repos")
+    prompt_parts = LibUtils.split_and_label_prompt_parts_from_string(prompt)
+    files_dir = LibUtils.get_lib_home()
+    repos_dir = files_dir.joinpath("repos")
 
     # Separate multimodal parts for concurrent processing
     text_parts = [part for part in prompt_parts if part["type"] == "text"]
     multimodal_parts = [part for part in prompt_parts if part["type"] == "multimodal"]
 
     # Process text parts
-    parts = [TextPart(text=part["value"]) for part in text_parts]
+    parts = [part["value"] for part in text_parts]
 
     # Process multimodal parts concurrently
     multimodal_results = await gather(

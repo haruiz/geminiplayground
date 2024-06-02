@@ -48,11 +48,10 @@ pandas = "^2.2.2"
 validators = "0.28.1"
 textual = "^0.63.6"
 langchain-google-genai = "^1.0.5"
-chromadb = "^0.5.0"
-langchain-weaviate = "^0.0.2"
-langchainhub = "^0.1.17"
+
 
 [tool.poetry.group.rag]
+optional = true
 
 
 [tool.poetry.group.rag.dependencies]
@@ -66,6 +65,8 @@ pytesseract = "^0.3.10"
 pikepdf = "^9.0.0"
 langchain = "^0.2.1"
 langchain-community = "^0.2.1"
+langchain-weaviate = "^0.0.2"
+langchainhub = "^0.1.17"
 
 [tool.poetry.scripts]
 geminiplayground = "geminiplayground.cli:run"
@@ -77,25 +78,8 @@ flake8 = "^7.0.0"
 ruff = "^0.4.4"
 mypy = "^1.10.0"
 
-[tool.mypy]
-exclude = ["build", "dist", "venv", ".venv", ".mypy_cache", ".pytest_cache", ".git", ".tox", ".eggs", "__pycache__"]
-ignore_missing_imports = true
-
 [tool.black]
 line-length = 88
-exclude = '/(\.git|\.venv|\.mypy_cache|\.pytest_cache|\.tox|\.eggs|__pycache__|build|dist)/'
-target-version = ['py310']
-
-#[tool.ruff.format]
-#quote-style = "single"
-#indent-style = "tab"
-#exclude = '/(\.git|\.venv|\.mypy_cache|\.pytest_cache|\.tox|\.eggs|__pycache__|build|dist)/'
-#
-#[tool.ruff.lint]
-#exclude = '/(\.git|\.venv|\.mypy_cache|\.pytest_cache|\.tox|\.eggs|__pycache__|build|dist)/'
-
-# Skip unused variable rules (`F841`).
-#extend-ignore = ["F401"]
 
 
 [build-system]

@@ -1,3 +1,4 @@
+from io import BytesIO
 from pathlib import Path
 import typing
 import os
@@ -11,7 +12,7 @@ from tqdm import tqdm
 class VideoUtils:
     @staticmethod
     def extract_video_frames(
-        video_path: typing.Union[str, Path], output_dir: typing.Union[str, Path]
+            video_path: typing.Union[str, Path], output_dir: typing.Union[str, Path]
     ) -> list:
         """
         Extract frames from the video
@@ -28,7 +29,7 @@ class VideoUtils:
         count = 0
         frames_files = []
         with tqdm(
-            total=math.ceil(duration), unit="sec", desc="Extracting frames"
+                total=math.ceil(duration), unit="sec", desc="Extracting frames"
         ) as pbar:
             while True:
                 ret, frame = vidcap.read()
@@ -80,7 +81,7 @@ class VideoUtils:
 
     @staticmethod
     def extract_video_frame_at_t(
-        video_path: typing.Union[str, Path], timestamp_seconds: int
+            video_path: typing.Union[str, Path], timestamp_seconds: int
     ) -> PILImageType:
         """
         Extract a frame at a specific timestamp
@@ -104,10 +105,10 @@ class VideoUtils:
 
     @classmethod
     def create_video_thumbnail(
-        cls,
-        video_path: typing.Union[str, Path],
-        thumbnail_size: tuple = (128, 128),
-        t=0,
+            cls,
+            video_path: typing.Union[str, Path],
+            thumbnail_size: tuple = (128, 128),
+            t=0,
     ) -> PILImageType:
         """
         Create a thumbnail for a video

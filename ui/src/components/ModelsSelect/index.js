@@ -27,19 +27,19 @@ export default function ModelsSelect({...props}) {
             const {data} = await axiosInstance.get('/models');
             return data;
         },
-        select: data => data.filter(({supportedGenerationMethods}) => supportedGenerationMethods.includes("generateContent"))
+        select: data => data.filter(({supported_generation_methods}) => supported_generation_methods.includes("generateContent"))
     });
 
 
-    return (<Select {...props} >
+    return (<Select  {...props} >
         <FormControl>
-        <SelectTrigger
-            className="flex items-stretch [&_[data-description]]:hidden [&_[data-displayname]]:group-hover:flex min-w-[300px]">
-            <SelectValue placeholder="Select a model"/>
-        </SelectTrigger>
+            <SelectTrigger
+                className="flex items-stretch [&_[data-description]]:hidden [&_[data-displayname]]:group-hover:flex min-w-[300px]">
+                <SelectValue placeholder="Select a model"/>
+            </SelectTrigger>
         </FormControl>
         <SelectContent>
-            {modelsData?.map(({name, displayName, description, inputTokenLimit, outputTokenLimit}) => (
+            {modelsData?.map(({name, display_name, description, input_token_limit, output_token_limit}) => (
                 <SelectItem key={name} value={name}>
                     <div className="flex items-start gap-3 text-muted-foreground w-[300px]">
                         <BotIcon/>
@@ -48,18 +48,18 @@ export default function ModelsSelect({...props}) {
                                 {name}
                             </p>
                             <p className="text-xs" data-displayname>
-                                <span className="font-medium text-foreground">{displayName}</span>
+                                <span className="font-medium text-foreground">{display_name}</span>
                             </p>
                             <p className="text-xs" data-description>
                                 {description}
                             </p>
                             <p className="text-xs" data-inputtokens>
                                 <span className="font-medium text-foreground">Input tokens:</span>{' '}
-                                <span className="text-muted-foreground">{beautifyNumber(inputTokenLimit)}</span>
+                                <span className="text-muted-foreground">{beautifyNumber(input_token_limit)}</span>
                             </p>
                             <p className="text-xs" data-outputtokens>
                                 <span className="font-medium text-foreground">Output tokens:</span>{' '}
-                                <span className="text-muted-foreground">{beautifyNumber(outputTokenLimit)}</span>
+                                <span className="text-muted-foreground">{beautifyNumber(output_token_limit)}</span>
                             </p>
                         </div>
                     </div>

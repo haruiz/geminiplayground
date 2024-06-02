@@ -10,36 +10,9 @@ from rich.table import Table
 from tqdm import tqdm
 import google.generativeai as genai
 from google.generativeai.types import Model, File
-
-from geminiplayground.utils import Singleton
+from geminiplayground.utils import Singleton, LibUtils
 
 logger = logging.getLogger("rich")
-
-
-def _normalize_prompt(prompt):
-    """
-    Normalize the prompt.
-    :param prompt:
-    :return:
-    """
-    from geminiplayground.parts import MultimodalPart
-
-    normalized_prompt = []
-
-    if isinstance(prompt, str):
-        prompt = [prompt]
-
-    for part in prompt:
-        if isinstance(part, str):
-            normalized_prompt.append(part)
-        elif isinstance(part, MultimodalPart):
-            content_parts = part.content_parts()
-            normalized_prompt.extend(content_parts)
-        elif isinstance(part, File):
-            normalized_prompt.append(part)
-        else:
-            raise ValueError(f"Invalid prompt part: {part}")
-    return normalized_prompt
 
 
 class GeminiClient(metaclass=Singleton):
@@ -182,16 +155,16 @@ class GeminiClient(metaclass=Singleton):
         """
         model_names = [m.name for m in self.query_models()]
         assert (
-            model in model_names
+                model in model_names
         ), f"Model {model} not found. Available models: {model_names}"
 
         model = genai.GenerativeModel(model)
-        normalized_prompt = _normalize_prompt(prompt)
+        normalized_prompt = LibUtils.normalize_prompt(prompt)
         response = model.count_tokens(normalized_prompt)
         return response
 
     def generate(
-        self, model: str, prompt: typing.Any, system_instruction=None, **kwargs
+            self, model: str, prompt: typing.Any, system_instruction=None, **kwargs
     ):
         """
         Generate a response from a prompt.
@@ -199,11 +172,6 @@ class GeminiClient(metaclass=Singleton):
         :param prompt: The prompt
         :return:
         """
-        model_names = [m.name for m in self.query_models()]
-        assert (
-            model in model_names
-        ), f"Model {model} not found. Available models: {model_names}"
-
         model = genai.GenerativeModel(model, system_instruction=system_instruction)
         response = model.generate_content(prompt, **kwargs)
         return response
@@ -216,23 +184,18 @@ class GeminiClient(metaclass=Singleton):
         :param system_instruction: The system instruction
         :return:
         """
-        model_names = [m.name for m in self.query_models()]
-        assert (
-            model in model_names
-        ), f"Model {model} not found. Available models: {model_names}"
-
         model = genai.GenerativeModel(model, system_instruction=system_instruction)
         for message_chunk in model.generate_content(prompt, stream=True, **kwargs):
             yield message_chunk
 
     @tenacity.retry(wait=tenacity.wait_fixed(2), stop=tenacity.stop_after_attempt(3))
     def generate_response(
-        self,
-        model: str,
-        prompt: typing.Any,
-        stream: bool = False,
-        system_instruction=None,
-        **kwargs,
+            self,
+            model: str,
+            prompt: typing.Any,
+            stream: bool = False,
+            system_instruction=None,
+            **kwargs,
     ):
         """
         Generate a response from a prompt.
@@ -242,7 +205,12 @@ class GeminiClient(metaclass=Singleton):
         :param system_instruction: The system instruction
         :return:
         """
-        normalized_prompt = _normalize_prompt(prompt)
+        model_names = [m.name for m in self.query_models()]
+        assert (
+                model in model_names
+        ), f"Model {model} not found. Available models: {model_names}"
+
+        normalized_prompt = LibUtils.normalize_prompt(prompt)
         if stream:
             return self.stream(
                 model,
@@ -254,7 +222,7 @@ class GeminiClient(metaclass=Singleton):
             model, normalized_prompt, system_instruction=system_instruction, **kwargs
         )
 
-    def start_chat(self, model: str, history: list = None, tools: list = None):
+    def start_chat(self, model: str, history: list = None, tools: list = None, **kwargs):
         """
         Start a chat session.
         :param model: The model to use
@@ -262,19 +230,6 @@ class GeminiClient(metaclass=Singleton):
         :param tools: The tools to use
         :return:
         """
-        function_call_supported_models = [
-            "models/gemini-1.0-pro",
-            "models/gemini-1.0-pro-001",
-            "models/gemini-1.5-pro-latest",
-            "models/gemini-1.5-flash-latest",
-        ]
-        if len(tools) > 0 and model not in function_call_supported_models:
-            raise ValueError(f"Model {model} does not support function calling. ")
-
-        chat_model = genai.GenerativeModel(
-            model_name="gemini-1.0-pro-001",
-            generation_config=genai.GenerationConfig(temperature=0),
-            tools=tools,
-        )
-        chat = chat_model.start_chat(history=history)
-        return chat
+        model = genai.GenerativeModel(model, tools=tools, **kwargs)
+        # logging.info(model._tools.to_proto())
+        return model.start_chat(history=history)

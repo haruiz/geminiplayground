@@ -21,22 +21,16 @@ from googleapiclient.errors import HttpError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.concurrency import run_in_threadpool
-from geminiplayground.core import GeminiClient
+from geminiplayground.core import GeminiClient, GeminiPlayground, ToolCall
+from geminiplayground.utils import (
+    GitUtils, VideoUtils, ImageUtils, PDFUtils, LibUtils
+)
 from geminiplayground.parts import (
     GitRepoBranchNotFoundException,
     GitRepo,
     MultimodalPartFactory,
 )
-from geminiplayground.schemas import GenerationSettings, ChatHistory
-from geminiplayground.utils import (
-    get_repo_name,
-    get_github_repo_available_branches,
-    folder_contains_git_repo,
-    get_gemini_playground_cache_dir,
-    create_image_thumbnail,
-    create_video_thumbnail,
-    create_pdf_thumbnail,
-)
+
 from .db.models import MultimodalPartEntry as MultimodalPartDBModel, EntryStatus
 from .db.session_manager import get_db_session
 from .utils import get_parts_from_prompt_text
@@ -47,6 +41,8 @@ api = FastAPI(root_path="/api")
 gemini_client = GeminiClient()
 
 THUMBNAIL_SIZE = (64, 64)
+PLAYGROUND_HOME_DIR = LibUtils.get_lib_home()
+
 DBSessionDep = Annotated[AsyncSession, Depends(get_db_session)]
 
 
@@ -64,8 +60,8 @@ def get_models_handler():
 
 
 @api.get("/parts")
-async def get_tags_handler(
-    request: Request, db_session: DBSessionDep, background_tasks: BackgroundTasks
+async def get_parts_handler(
+        request: Request, db_session: DBSessionDep, background_tasks: BackgroundTasks
 ):
     """
     Get tags
@@ -143,7 +139,7 @@ async def clone_repo_task(repo_name: str, repo_path: str, repo_branch: str):
 
 @api.post("/uploadRepo")
 async def upload_repo_handler(
-    request: Request, background_tasks: BackgroundTasks, db_session: DBSessionDep
+        request: Request, background_tasks: BackgroundTasks, db_session: DBSessionDep
 ):
     """
     Hello endpoint
@@ -156,18 +152,18 @@ async def upload_repo_handler(
 
     try:
         if validators.url(repo_path):
-            available_branches = get_github_repo_available_branches(repo_path)
+            available_branches = GitUtils.get_github_repo_available_branches(repo_path)
             assert repo_branch in available_branches, (
                 f"Branch {repo_branch} does not exist in {repo_path}, "
                 f"available branches are: {available_branches}"
             )
         elif Path(repo_path).is_dir() and Path(repo_path).exists():
-            assert folder_contains_git_repo(
+            assert GitUtils.folder_contains_git_repo(
                 repo_path
             ), f"Invalid repository path: {repo_path}"
         else:
             raise Exception(f"Invalid repository path: {repo_path}")
-        repo_name = get_repo_name(repo_path)
+        repo_name = GitUtils.get_repo_name(repo_path)
         new_part = MultimodalPartDBModel(name=repo_name, content_type="repo")
         db_session.add(new_part)
         await db_session.commit()
@@ -212,9 +208,9 @@ async def upload_file(session: AsyncSession, file_path: Path, content_type: str)
     try:
         if content_type in ["image", "video", "pdf"]:
             thumbnail_func = {
-                "image": create_image_thumbnail,
-                "video": create_video_thumbnail,
-                "pdf": create_pdf_thumbnail,
+                "image": ImageUtils.create_image_thumbnail,
+                "video": VideoUtils.create_video_thumbnail,
+                "pdf": PDFUtils.create_pdf_thumbnail,
             }[content_type]
             thumbnail_img = thumbnail_func(file_path, THUMBNAIL_SIZE)
             if thumbnail_img:
@@ -239,10 +235,10 @@ async def upload_file(session: AsyncSession, file_path: Path, content_type: str)
 
 @api.post("/uploadFile")
 async def upload_file_handler(
-    request: Request,
-    background_tasks: BackgroundTasks,
-    upload_file: UploadFile = File(alias="file"),
-    db_session: AsyncSession = Depends(get_db_session),
+        request: Request,
+        background_tasks: BackgroundTasks,
+        upload_file: UploadFile = File(alias="file"),
+        db_session: AsyncSession = Depends(get_db_session),
 ):
     """
     Hello endpoint
@@ -276,9 +272,8 @@ async def upload_file_handler(
         }[mime_type]
 
         file_name = upload_file.filename
-        cache_folder = get_gemini_playground_cache_dir()
 
-        file_path = Path(cache_folder).joinpath(file_name)
+        file_path = Path(PLAYGROUND_HOME_DIR).joinpath(file_name)
         with open(file_path, "wb") as file:
             file_bytes = await upload_file.read()
             file.write(file_bytes)
@@ -306,10 +301,10 @@ async def delete_multimodal_part_files(multimodal_part):
 
 @api.delete("/parts/{part_id}")
 async def delete_part_handler(
-    request: Request,
-    background_tasks: BackgroundTasks,
-    part_id: str,
-    db_session: AsyncSession = Depends(get_db_session),
+        request: Request,
+        background_tasks: BackgroundTasks,
+        part_id: str,
+        db_session: AsyncSession = Depends(get_db_session),
 ):
     """
     Delete part
@@ -317,8 +312,7 @@ async def delete_part_handler(
     """
     try:
         public_files_dir = Path(os.environ["FILES_DIR"])
-        cache_folder = get_gemini_playground_cache_dir()
-        repo_folder = cache_folder.joinpath("repos")
+        repo_folder = PLAYGROUND_HOME_DIR.joinpath("repos")
         logger.info(f"Deleting part {part_id}")
         query = select(MultimodalPartDBModel).filter(
             MultimodalPartDBModel.name == part_id
@@ -332,10 +326,10 @@ async def delete_part_handler(
                     shutil.rmtree(repo_folder)
             else:
                 multimodal_part = MultimodalPartFactory.from_path(
-                    cache_folder.joinpath(part_id)
+                    PLAYGROUND_HOME_DIR.joinpath(part_id)
                 )
                 background_tasks.add_task(delete_multimodal_part_files, multimodal_part)
-                file = cache_folder.joinpath(part_id)
+                file = PLAYGROUND_HOME_DIR.joinpath(part_id)
                 if file.exists():
                     file.unlink()
                 thumbnail_file = public_files_dir.joinpath(
@@ -361,7 +355,6 @@ async def websocket_receiver(websocket: WebSocket):
     """
     try:
         await websocket.accept()
-        chat_history: list | ChatHistory = []
 
         async def dispatch_event(event_type, data=None):
             """
@@ -369,34 +362,39 @@ async def websocket_receiver(websocket: WebSocket):
             """
             await websocket.send_json({"event": event_type, "data": data})
 
+        chat = None
         while True:
             data = await websocket.receive_json()
             event = data.get("event")
             data = data.get("data")
 
             match event:
+                case "set_model":
+                    model = data.get("model")
+                    playground = GeminiPlayground(
+                        model=model
+                    )
+                    chat = playground.start_chat()
+
+            match event:
                 case "generate_response":
                     generate_prompt = data.get("message")
-                    generative_model = data.get("model")
+                    # generative_model = data.get("model")
                     generate_settings = data.get("settings", None)
-                    try:
-                        chat = gemini_client.start_chat(
-                            model=generative_model, history=chat_history
+                    if chat is None:
+                        await dispatch_event(
+                            "response_error", {"message": "Model not set"}
                         )
+                    try:
                         prompt_parts = await get_parts_from_prompt_text(generate_prompt)
                         generate_response = await run_in_threadpool(
-                            lambda: chat.generate_response(
-                                prompt_parts,
-                                stream=True,
-                                generation_config=GenerationSettings(
-                                    **generate_settings
-                                ),
-                            )
-                        )
-
+                            lambda: chat.send_message(prompt_parts, stream=True, generation_config=generate_settings))
                         await dispatch_event("response_started")
-                        for response_chunk in generate_response:
-                            await dispatch_event("response_chunk", response_chunk.text)
+                        for message_chunk in generate_response:
+                            if isinstance(message_chunk, ToolCall):
+                                await dispatch_event("response_chunk", f"Calling function ...{message_chunk.tool_name}")
+                                break
+                            await dispatch_event("response_chunk", message_chunk.text)
                         await dispatch_event("response_completed")
                     except (HttpError, Exception) as e:
                         error_message = (
@@ -410,8 +408,9 @@ async def websocket_receiver(websocket: WebSocket):
                         )
 
                 case "clear_queue":
-                    chat_history = []
+                    if chat:
+                        chat.clear_history()
                 case _:
                     pass
-    except WebSocketDisconnect as e:
-        logger.error(e)
+    except WebSocketDisconnect:
+        logger.warning("client disconnected ...")

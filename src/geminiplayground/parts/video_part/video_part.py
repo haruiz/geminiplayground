@@ -71,7 +71,7 @@ class VideoFile(MultimodalPart):
 
         logger.info(f"Uploading image file {self.filename}")
         uploaded_file = self.upload()
-        delta_t = LibUtils.get_file_exp_data_delta_t(uploaded_file)
+        delta_t = LibUtils.get_uploaded_file_exp_date_delta_t(uploaded_file)
         cache.set(self.filename, uploaded_file, expire=delta_t)
         return uploaded_file
 

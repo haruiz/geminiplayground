@@ -29,7 +29,7 @@ class LibUtils:
         return cache_dir
 
     @staticmethod
-    def get_file_exp_data_delta_t(uploaded_file: File) -> float:
+    def get_uploaded_file_exp_date_delta_t(uploaded_file: File) -> float:
         """
         Get the delta time
         :param uploaded_file: the uploaded file

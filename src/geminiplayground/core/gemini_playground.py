@@ -43,7 +43,6 @@ class ChatSession:
     def __init__(self, model: str, history: list, toolbox: dict, **kwargs):
         self.model = model
         self.toolbox = toolbox
-        gemini_client = GeminiClient()
         tools_def = [
             Tool(
                 function_declarations=[
@@ -52,6 +51,7 @@ class ChatSession:
                 ]
             )
         ]
+        gemini_client = kwargs.pop("gemini_client", GeminiClient())
         self.chat = gemini_client.start_chat(
             model=model,
             history=history,

@@ -1,10 +1,11 @@
 "use client";
-import {BotMessageSquare, DatabaseIcon, FilesIcon, LifeBuoy, SquareUser, Triangle,} from "lucide-react"
+import {BotMessageSquare, DatabaseIcon, LifeBuoy, SquareUser, Triangle, MoonIcon, SunIcon} from "lucide-react"
 import {Button} from "@/components/ui/button"
 import {Tooltip, TooltipContent, TooltipTrigger,} from "@/components/ui/tooltip"
 import {usePathname, useRouter} from 'next/navigation'
 import Image from "next/image";
 import {Toaster} from "@/components/ui/toaster"
+import {useTheme} from "next-themes";
 
 function LeftTopNavBar() {
 
@@ -94,9 +95,17 @@ function LeftBottomNav() {
 }
 
 function TopNavBar() {
+    const {theme, setTheme} = useTheme();
+
     return <header className="sticky top-0 z-10 flex h-[60px] items-center gap-1 border-b bg-background px-4">
         <h1 className="text-xl font-semibold">Gemini Playground</h1>
         <Image src="/gemini-logo.svg" width={50} height={50} priority={true} alt={"gemini logo"}/>
+        <div className="flex ml-auto gap-1">
+            <Button variant="ghost" size="icon" aria-label="Toggle Theme"
+                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+                {theme === "dark" ? <MoonIcon className="size-5"/> : <SunIcon className="size-5"/>}
+            </Button>
+        </div>
     </header>;
 }
 

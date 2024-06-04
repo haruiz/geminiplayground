@@ -18,12 +18,11 @@ import DataTable from "@/components/DataTable";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import {Badge} from "@/components/ui/badge"
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
 } from "@/components/ui/tooltip"
-
 
 
 const FilesTable = forwardRef(function FilesTable({...rest}, ref) {
@@ -66,7 +65,6 @@ const FilesTable = forwardRef(function FilesTable({...rest}, ref) {
         {
             header: "Status",
             cell: ({row}) => {
-                console.log(row.original)
                 const status = row.original.status
                 const statusMessage = row.original.statusMessage
                 if (status === "ready" || status === "pending") {
@@ -74,15 +72,15 @@ const FilesTable = forwardRef(function FilesTable({...rest}, ref) {
                 }
                 return (
                     <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Badge variant="destructive"
-                           style={{cursor:"pointer"}}>{status}</Badge>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{statusMessage}</p>
-                        </TooltipContent>
-                      </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <Badge variant="destructive"
+                                       style={{cursor: "pointer"}}>{status}</Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{statusMessage}</p>
+                            </TooltipContent>
+                        </Tooltip>
                     </TooltipProvider>
                 )
             }

@@ -9,6 +9,7 @@ class EntryStatus(Enum):
     """
     Upload status enum.
     """
+
     PENDING = "pending"
     READY = "ready"
     ERROR = "error"
@@ -22,6 +23,7 @@ class MultimodalPartEntry(Base):
     """
     Multimodal part model.
     """
+
     __tablename__ = "part"
 
     name: Mapped[str] = mapped_column(primary_key=True)

@@ -2,7 +2,7 @@ import os
 
 from pydantic_settings import BaseSettings
 
-from geminiplayground.utils import get_gemini_playground_cache_dir
+from geminiplayground.utils import LibUtils
 
 
 class Settings(BaseSettings):
@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     echo_sql: bool = True
 
 
-cache_dir = get_gemini_playground_cache_dir()
-database_file = os.path.join(cache_dir, "data.db")
+playground_home = LibUtils.get_lib_home()
+database_file = os.path.join(playground_home, "data.db")
 database_uri = f"sqlite+aiosqlite:///{database_file}"
 settings = Settings(database_url=database_uri, echo_sql=False)

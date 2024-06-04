@@ -23,9 +23,15 @@ export default function Chat() {
         WS_URL,
         {
             share: false,
-            shouldReconnect: () => true,
+            shouldReconnect: () => false,
         },
     )
+    const {data: selectedModel} = useQuery({
+        queryKey: ["selectedModel"],
+        queryFn: async () => {
+            return queryClient.getQueryData(["selectedModel"]) || null;
+        }
+    });
 
     useEffect(() => {
         console.log("Connection state changed")
@@ -91,6 +97,18 @@ export default function Chat() {
             });
         }
     }, [lastJsonMessage])
+
+    useEffect(() => {
+        if (selectedModel) {
+            sendJsonMessage({
+                event: "set_model",
+                data: {
+                    model: selectedModel
+                }
+            });
+        }
+    }, [selectedModel])
+
 
     const addMessage = useMutation({
         mutationFn: async (message) => {
@@ -162,9 +180,8 @@ export default function Chat() {
             let modelSettings = settingFormRef.current.getSettings();
             modelSettings = {
                 temperature: parseFloat(modelSettings.temperature),
-                candidateCount: parseInt(modelSettings.candidateCount),
-                topK: parseInt(modelSettings.topK),
-                topP: parseFloat(modelSettings.topP),
+                top_k: parseInt(modelSettings.top_k),
+                top_p: parseFloat(modelSettings.top_p),
             }
 
             const messageRequest = {

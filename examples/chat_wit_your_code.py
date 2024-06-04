@@ -1,8 +1,7 @@
 from rich import print
 
 from geminiplayground.core import GeminiClient
-from geminiplayground.parts.git_repo_part import GitRepo
-from geminiplayground.schemas import GenerateRequestParts, TextPart, GenerateRequest
+from geminiplayground.parts import GitRepo
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())
@@ -13,7 +12,6 @@ def chat_wit_your_code():
     Get the content parts of a github repo and generate a request.
     :return:
     """
-
     repo = GitRepo.from_url(
         "https://github.com/karpathy/ng-video-lecture",
         branch="master",
@@ -22,29 +20,21 @@ def chat_wit_your_code():
             "file_extensions": [".py"],
         },
     )
-    repo_parts = repo.content_parts()
-    request_parts = GenerateRequestParts(
-        parts=[
-            TextPart(text="use this codebase:"),
-            *repo_parts,
-            TextPart(text="Describe the `bigram.py` file, and generate some code snippets"),
-        ]
-    )
-    request = GenerateRequest(contents=[request_parts])
+    prompt = [
+        "use this codebase:",
+        repo,
+        "Describe the `bigram.py` file, and generate some code snippets",
+    ]
     model = "models/gemini-1.5-pro-latest"
-
     gemini_client = GeminiClient()
-    tokens_count = gemini_client.get_tokens_count(model, request)
+    tokens_count = gemini_client.count_tokens(model, prompt)
     print("Tokens count: ", tokens_count)
-    response = gemini_client.generate_response(model, request)
+    response = gemini_client.generate_response(model, prompt, stream=True)
 
     # Print the response
-    for candidate in response.candidates:
-        for part in candidate.content.parts:
-            if part.text:
-                with open("output.txt", "a") as f:
-                    f.write(part.text + "\n")
-                print(part.text)
+    for message_chunk in response:
+        if message_chunk.parts:
+            print(message_chunk.text)
 
 
 if __name__ == "__main__":

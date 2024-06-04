@@ -8,4 +8,5 @@ load_dotenv(find_dotenv())
 if __name__ == "__main__":
     gemini_client = GeminiClient()
     models = gemini_client.query_models()
-    print(models)
+    for m in models:
+        print(m)

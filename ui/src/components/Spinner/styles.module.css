@@ -1,25 +1,29 @@
 
 .loader {
     text-align: center;
+    padding: 0;
 }
+
 .loader span {
-    --dot-size: 11px;
+    --dot-size: 12px;
     --animation-duration: 0.8s;
-    --dot-color: white;
+    --dot-color: darkgray;
     display: inline-block;
-    vertical-align: middle;
-    width:var(--dot-size);;
+    width: var(--dot-size);;
     height: var(--dot-size);
     background: var(--dot-color);
     border-radius: var(--dot-size);
     animation: loader var(--animation-duration) infinite alternate;
 }
+
 .loader span:nth-of-type(2) {
     animation-delay: 0.2s;
 }
+
 .loader span:nth-of-type(3) {
     animation-delay: 0.6s;
 }
+
 @keyframes loader {
     0% {
         opacity: 0.9;

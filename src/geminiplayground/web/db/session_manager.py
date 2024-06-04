@@ -14,16 +14,20 @@ from .config import settings
 from .registry import mapper_registry
 
 
-# https://medium.com/@tclaitken/setting-up-a-fastapi-app-with-async-sqlalchemy-2-0-pydantic-v2-e6c540be4308
-
 class SessionManager(metaclass=Singleton):
-    def __init__(self, url: str,
-                 enable_foreign_keys: bool = True,
-                 autocommit: bool = False,
-                 autflush: bool = False,
-                 expire_on_commit: bool = False,
-                 engine_kwargs: Any = None
-                 ):
+    """
+    Database session manager
+    """
+
+    def __init__(
+            self,
+            url: str,
+            enable_foreign_keys: bool = True,
+            autocommit: bool = False,
+            autflush: bool = False,
+            expire_on_commit: bool = False,
+            engine_kwargs: Any = None,
+    ):
         if engine_kwargs is None:
             engine_kwargs = {}
 
@@ -37,10 +41,13 @@ class SessionManager(metaclass=Singleton):
             autocommit=autocommit,
             autoflush=autflush,
             expire_on_commit=expire_on_commit,
-            bind=self._engine)
+            bind=self._engine,
+        )
 
     async def init(self, drop_all: bool = False):
-        print("Initializing DatabaseSessionManager")
+        """
+        Initialize the database
+        """
         if self._engine is None:
             raise Exception("DatabaseSessionManager is not initialized")
         async with self._engine.begin() as conn:
@@ -50,6 +57,9 @@ class SessionManager(metaclass=Singleton):
         return self
 
     async def close(self):
+        """
+        Close the database
+        """
         if self._engine is None:
             raise Exception("DatabaseSessionManager is not initialized")
         await self._engine.dispose()
@@ -58,6 +68,9 @@ class SessionManager(metaclass=Singleton):
 
     @contextlib.asynccontextmanager
     async def connect(self) -> AsyncIterator[AsyncConnection]:
+        """
+        Connect to the database
+        """
         if self._engine is None:
             raise Exception("DatabaseSessionManager is not initialized")
 
@@ -70,6 +83,9 @@ class SessionManager(metaclass=Singleton):
 
     @contextlib.asynccontextmanager
     async def session(self) -> AsyncIterator[AsyncSession]:
+        """
+        Create a new session
+        """
         if self._session_maker is None:
             raise Exception("DatabaseSessionManager is not initialized")
 
@@ -90,9 +106,13 @@ sessionmanager = SessionManager(
         "poolclass": NullPool,
         "pool_recycle": 3600,
         "future": True,
-    })
+    },
+)
 
 
 async def get_db_session():
+    """
+    Get a database session
+    """
     async with sessionmanager.session() as session:
         yield session

@@ -137,6 +137,37 @@ async def clone_repo_task(repo_name: str, repo_path: str, repo_branch: str):
         logger.error(e)
 
 
+async def copy_repo_task(repo_name: str, repo_path: str, repo_target_folder: str):
+    """
+    Clone a repository
+    """
+    try:
+        async for session in get_db_session():
+            query = select(MultimodalPartDBModel).filter(
+                MultimodalPartDBModel.name == repo_name
+            )
+            result = await session.execute(query)
+            part = result.scalars().first()
+            try:
+                await run_in_threadpool(
+                    lambda: shutil.copytree(repo_path, repo_target_folder)
+                )
+                logger.info(
+                    f"Copied repository {repo_name} from {repo_path} to {repo_target_folder}"
+                )
+                part.status = EntryStatus.READY
+            except GitRepoBranchNotFoundException as e:
+                part.status = EntryStatus.ERROR
+                part.status_message = str(e)
+                logger.error(
+                    f"Error copying repository {repo_name} from {repo_path} to {repo_target_folder}: {e}"
+                )
+            finally:
+                await session.commit()
+    except Exception as e:
+        logger.error(e)
+
+
 @api.post("/uploadRepo")
 async def upload_repo_handler(
         request: Request, background_tasks: BackgroundTasks, db_session: DBSessionDep
@@ -163,13 +194,20 @@ async def upload_repo_handler(
             ), f"Invalid repository path: {repo_path}"
         else:
             raise Exception(f"Invalid repository path: {repo_path}")
+
         repo_name = GitUtils.get_repo_name(repo_path)
         new_part = MultimodalPartDBModel(name=repo_name, content_type="repo")
         db_session.add(new_part)
         await db_session.commit()
+
         if validators.url(repo_path):
             background_tasks.add_task(
                 clone_repo_task, repo_name, repo_path, repo_branch
+            )
+        else:
+            repo_target_folder = PLAYGROUND_HOME_DIR.joinpath("repos").joinpath(repo_name)
+            background_tasks.add_task(
+                copy_repo_task, repo_name, repo_path, str(repo_target_folder)
             )
     except Exception as e:
         raise HTTPException(status_code=500, detail=repr(e))

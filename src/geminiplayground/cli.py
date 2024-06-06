@@ -28,7 +28,7 @@ def ui(
         host: str = "localhost",
         port: int = 8081,
         workers: int = os.cpu_count() * 2 + 1,
-        reload: Annotated[bool, typer.Option("--reload")] = True,
+        reload: Annotated[bool, typer.Option("--reload")] = False,
         api_key: str = typer.Option(None, envvar="GOOGLE_API_KEY")
 ):
     """
@@ -55,7 +55,7 @@ def api(
         host: str = "localhost",
         port: int = 8081,
         workers: int = os.cpu_count() * 2 + 1,
-        reload: Annotated[bool, typer.Option("--reload")] = True,
+        reload: Annotated[bool, typer.Option("--reload")] = False,
         api_key: str = typer.Option(None, envvar="GOOGLE_API_KEY"),
 ):
     """

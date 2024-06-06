@@ -2,14 +2,12 @@
 
 ![Gemini Logo](https://raw.githubusercontent.com/haruiz/geminiplayground/main/images/logo.png)
 
-Gemini-Playground provides a Python interface and a UI to interact with last Google's
-Gemini's version, `models/gemini-1.5-pro-latest`, and other variants of Gemini. With Gemini Playground,
-you can:
+Gemini Playground provides a Python interface and a user interface to interact with different Gemini model variants. With Gemini Playground, you can:
 
-* **Engage in conversation with your data:** Upload images, and videos using a simple API and
+* **Engage in conversation with your data either through a simple code API or using the API:** Upload images and videos using a simple API and
   generate responses based on your prompts.
-* **Chat with your codebase:** Ask Gemini to analyze your code, explain its
-  functionality, suggest improvements, or even write documentation for it.
+* **Chat with your codebase as you do with images, PDFs and audio files:** Ask Gemini to analyze your code, explain its
+  functionality, suggest improvements or even write documentation for it.
 * **Explore multimodal capabilities:** Combine different data types in your prompts,
   like asking Gemini to describe what's happening in a video and an image simultaneously.
 
@@ -305,7 +303,7 @@ if __name__ == "__main__":
             break
 ```
 
-This is a basic example.Explore the codebase and documentation for more
+This is a basic example. Explore the codebase and documentation for more
 advanced functionalities and examples.
 
 ### GUI
@@ -331,11 +329,13 @@ This will start a local server and open the GUI in your default browser.
 
 ![Gemini GUI](https://raw.githubusercontent.com/haruiz/geminiplayground/main/images/ui.png)
 
+To access the uploaded files from the UI, just type `@`. It will open a popup list where you can select the file you want.
+
 ### Contributing
 
-Contributions are welcome! Please see the`CONTRIBUTING.md` file for guidelines [Coming soon].
+Contributions are welcome! Please see the 'CONTRIBUTING.md` file for guidelines [Coming soon].
 
 ### License
 
-This codebase is licensed under the MIT License.See the`LICENSE`file for details.
+This codebase is licensed under the MIT License. See the`LICENSE` file for details. 
 

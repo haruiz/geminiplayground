@@ -12,7 +12,7 @@ class GitUtils:
 
     @staticmethod
     def get_code_files_in_dir(
-        root_dir: typing.Union[str, Path], files_extensions=None, exclude_dirs=None
+            root_dir: typing.Union[str, Path], files_extensions=None, exclude_dirs=None
     ) -> list:
         """
         Extract code files from the repo
@@ -29,9 +29,9 @@ class GitUtils:
             "dist",
             "target",
         ]
-        ignore_dirs = []
+        ignore_dirs = default_exclude_dirs
         if exclude_dirs is not None:
-            ignore_dirs = default_exclude_dirs + exclude_dirs
+            ignore_dirs += exclude_dirs
 
         if files_extensions is None:
             files_extensions = [
@@ -80,7 +80,7 @@ class GitUtils:
             last_suffix_index = len(url)
         if last_slash_index < 0 or last_suffix_index <= last_slash_index:
             raise Exception("invalid url format {}".format(url))
-        return url[last_slash_index + 1 : last_suffix_index]
+        return url[last_slash_index + 1: last_suffix_index]
 
     @classmethod
     def get_repo_name_from_path(cls, path: str) -> str:

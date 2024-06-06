@@ -2,9 +2,11 @@
 
 ![Gemini Logo](https://raw.githubusercontent.com/haruiz/geminiplayground/main/images/logo.png)
 
-Gemini Playground provides a Python interface and a user interface to interact with different Gemini model variants. With Gemini Playground, you can:
+Gemini Playground provides a Python interface and a user interface to interact with different Gemini model variants.
+With Gemini Playground, you can:
 
-* **Engage in conversation with your data either through a simple code API or using the API:** Upload images and videos using a simple API and
+* **Engage in conversation with your data either through a simple code API or using the API:** Upload images and videos
+  using a simple API and
   generate responses based on your prompts.
 * **Chat with your codebase as you do with images, PDFs and audio files:** Ask Gemini to analyze your code, explain its
   functionality, suggest improvements or even write documentation for it.
@@ -259,7 +261,8 @@ if __name__ == "__main__":
 ```python
 from dotenv import load_dotenv, find_dotenv
 
-from geminiplayground.core import GeminiPlayground, Message
+from geminiplayground.core import GeminiPlayground, Message, ToolCall
+from geminiplayground.parts import ImageFile
 
 load_dotenv(find_dotenv())
 
@@ -282,6 +285,13 @@ if __name__ == "__main__":
 
 
     chat = playground.start_chat(history=[])
+
+    image = ImageFile("./data/dog.jpg")
+    ai_message = chat.send_message(["can you describe the following image: ", image], stream=True)
+    for response_chunk in ai_message:
+        if isinstance(response_chunk, Message):
+            print(response_chunk.text, end="")
+    print()
     while True:
         user_input = input("You: ")
         if user_input == "exit":
@@ -290,17 +300,18 @@ if __name__ == "__main__":
         try:
             model_response = chat.send_message(user_input, stream=True)
             for response_chunk in model_response:
-                if isinstance(response_chunk, Message):
-                    print(response_chunk.text, end="")
-                else:
+                if isinstance(response_chunk, ToolCall):
                     print(
                         f"Tool: {response_chunk.tool_name}, "
                         f"Result: {response_chunk.tool_result}"
                     )
+                    continue
+                print(response_chunk.text, end="")
             print()
         except Exception as e:
             print("Something went wrong: ", e)
             break
+
 ```
 
 This is a basic example. Explore the codebase and documentation for more
@@ -329,7 +340,8 @@ This will start a local server and open the GUI in your default browser.
 
 ![Gemini GUI](https://raw.githubusercontent.com/haruiz/geminiplayground/main/images/ui.png)
 
-To access the uploaded files from the UI, just type `@`. It will open a popup list where you can select the file you want.
+To access the uploaded files from the UI, just type `@`. It will open a popup list where you can select the file you
+want.
 
 ### Contributing
 

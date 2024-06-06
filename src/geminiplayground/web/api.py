@@ -23,7 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.concurrency import run_in_threadpool
 from geminiplayground.core import GeminiClient, GeminiPlayground, ToolCall
 from geminiplayground.utils import (
-    GitUtils, VideoUtils, ImageUtils, PDFUtils, LibUtils
+    GitUtils, VideoUtils, ImageUtils, PDFUtils, LibUtils, FileUtils
 )
 from geminiplayground.parts import (
     GitRepoBranchNotFoundException,
@@ -361,7 +361,9 @@ async def delete_part_handler(
             if multimodal_part_db_entry.content_type == "repo":
                 repo_folder = repo_folder.joinpath(part_id)
                 if repo_folder.exists():
+                    FileUtils.clear_folder(repo_folder)
                     shutil.rmtree(repo_folder)
+
             else:
                 multimodal_part = MultimodalPartFactory.from_path(
                     PLAYGROUND_HOME_DIR.joinpath(part_id)

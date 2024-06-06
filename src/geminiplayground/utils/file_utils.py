@@ -1,3 +1,4 @@
+import shutil
 import ssl
 from urllib.parse import urlparse
 import urllib.request
@@ -18,7 +19,7 @@ class FileUtils:
     """
 
     @classmethod
-    def rm_tree(cls, pth: typing.Union[str, Path]):
+    def clear_folder(cls, pth: typing.Union[str, Path]):
         """
         Recursively remove a directory and its contents
         :param pth:
@@ -31,8 +32,7 @@ class FileUtils:
             if child.is_file():
                 child.unlink()
             else:
-                cls.rm_tree(child)
-        pth.rmdir()
+                shutil.rmtree(child, ignore_errors=True)
 
     @classmethod
     @contextmanager
@@ -91,7 +91,7 @@ class FileUtils:
             file_extension = Path(file_name).suffix
             file_name_stem = Path(file_name).stem
             with cls.onflyTemporaryFile(
-                prefix=file_name_stem, suffix=file_extension
+                    prefix=file_name_stem, suffix=file_extension
             ) as temp_file:
                 with open(temp_file.name, "w+b") as f:
                     f.write(resp.read())
@@ -114,7 +114,7 @@ class FileUtils:
 
     @classmethod
     def solve_file_path(
-        cls, uri_or_path: typing.Union[str, Path]
+            cls, uri_or_path: typing.Union[str, Path]
     ) -> typing.ContextManager:
         """
         return the path of the file

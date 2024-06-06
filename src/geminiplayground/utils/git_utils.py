@@ -49,8 +49,10 @@ class GitUtils:
         code_files = []
         for path in Path(root_dir).rglob("*"):
             if path.is_file() and path.suffix in files_extensions:
+                # Check if any part of the path is in the ignore list
                 if not any([ignore_dir in path.parts for ignore_dir in ignore_dirs]):
                     code_files.append(path)
+
         return code_files
 
     @staticmethod

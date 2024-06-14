@@ -21,7 +21,6 @@ class ScoredRetriever(BaseRetriever):
             *self.vectorstore.similarity_search_with_score(query, k=self.k)
         )
         for doc, score in zip(docs, scores):
-            print(f"Score: {score} for doc: {doc}")
             doc.metadata["score"] = score
 
         return docs

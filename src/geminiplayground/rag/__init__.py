@@ -1,2 +1,2 @@
-from .simple_rag import SimpleRAG
+from .summarization_rag import SummarizationRAG
 from .agentic_rag import AgenticRAG

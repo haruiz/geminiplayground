@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO)
 load_dotenv(find_dotenv())
 
 
-class SimpleRAG:
+class SummarizationRAG:
     """
     A RAG model for summarization.
     """

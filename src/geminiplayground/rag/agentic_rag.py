@@ -128,6 +128,7 @@ class AgenticRAG:
         self._summarization_model = summarization_model
         self._batch_docs_size = 50
         self._files = []
+        self._files_retrievers = []
 
     def add_file(self, file_path: str):
         """
@@ -143,12 +144,10 @@ class AgenticRAG:
 
         self._files.append(file)
 
-    def get_retrievers_info(self):
+    def index_docs(self):
         """
         get retrievers info
         """
-        retrievers_info = []
-
         for file in self._files:
             loader = SummarizationLoader(self._summarization_model, file)
             docs = loader.load()
@@ -157,48 +156,57 @@ class AgenticRAG:
             for batch in doc_batches[1:]:
                 logging.info(f"Adding batch of {len(batch)} documents to vector store")
                 vector_store.add_documents(batch)
-            retrievers_info.append({
+            self._files_retrievers.append({
                 "name": str(file),
                 "description": f"Retriever for file {file}",
                 "retriever": ScoredRetriever(vectorstore=vector_store, k=5),
             })
-        return retrievers_info
+
+    def get_chain(self):
+        """
+        Get the chain.
+        """
+        DEFAULT_TEMPLATE = """The following is a friendly conversation between a human and an AI. The AI is talkative 
+                and provides lots of specific details from its context. If the AI does not know the answer to a question, 
+                it truthfully says it does not know.
+                Current conversation:
+                {history}
+                Human: {input}
+                AI:"""
+        default_prompt_template = DEFAULT_TEMPLATE.replace('input', 'query')
+        default_prompt = PromptTemplate(
+            template=default_prompt_template, input_variables=['history', 'query']
+        )
+        default_chain = ConversationChain(llm=self._chat_model, prompt=default_prompt, input_key='query',
+                                          output_key='result')
+        return MultiRetrievalQAChain.from_retrievers(llm=self._chat_model, retriever_infos=self._files_retrievers,
+                                                     default_chain=default_chain,
+                                                     verbose=True)
+
+    def invoke(self, question: str, chat_history=None):
+        """
+        Invoke the RAG workflow.
+        """
+        qa_chain = self.get_chain()
+        result = qa_chain.invoke({"input": question, "chat_history": chat_history})
+        return result
 
     def chat(self, chat_history=None):
         """
         Chat with the model.
         """
-        DEFAULT_TEMPLATE = """The following is a friendly conversation between a human and an AI. The AI is talkative 
-        and provides lots of specific details from its context. If the AI does not know the answer to a question, 
-        it truthfully says it does not know.
 
-        Current conversation:
-        {history}
-        Human: {input}
-        AI:"""
         if chat_history is None:
             chat_history = []
 
-        prompt_default_template = DEFAULT_TEMPLATE.replace('input', 'query')
-
-        prompt_default = PromptTemplate(
-            template=prompt_default_template, input_variables=['history', 'query']
-        )
-        default_chain = ConversationChain(llm=self._chat_model, prompt=prompt_default, input_key='query',
-                                          output_key='result')
-        retrievers = self.get_retrievers_info()
-        qa_chain = MultiRetrievalQAChain.from_retrievers(llm=self._chat_model, retriever_infos=retrievers,
-                                                         default_chain=default_chain,
-                                                         verbose=True)
         console = Console()
         while True:
-            user_input = input("You: ")
-            if user_input == "exit":
+            question = input("Question: ")
+            if question.lower() == "exit":
                 break
-            result = qa_chain.invoke({"input": user_input, "chat_history": chat_history})
-            chat_history.extend([HumanMessage(content=user_input), result["result"]])
+            result = self.invoke(question, chat_history)
+            chat_history.extend([HumanMessage(content=question), result["result"]])
             console.print(f"Answer: {result['result']}")
             if "source_documents" in result:
-                print("Source documents:")
                 for doc in result["source_documents"]:
                     console.print(doc)

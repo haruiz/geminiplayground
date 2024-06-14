@@ -30,6 +30,7 @@ share/python-wheels/
 .idea
 .DS_Store
 MANIFEST
+data/vis-language-model.pdf
 
 
 # PyInstaller

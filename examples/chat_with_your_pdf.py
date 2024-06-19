@@ -12,8 +12,10 @@ def chat_wit_your_pdf():
     Get the content parts of a pdf file and generate a request.
     :return:
     """
+    # cache.clear()
     gemini_client = GeminiClient()
     pdf_file_path = "https://www.tnstate.edu/faculty/fyao/COMP3050/Py-tutorial.pdf"
+    pdf_file_path = "./../data/vis-language-model.pdf"
     pdf_file = PdfFile(pdf_file_path, gemini_client=gemini_client)
 
     prompt = ["Please create a summary of the pdf file:", pdf_file]

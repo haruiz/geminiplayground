@@ -1,5 +1,5 @@
 from .git_repo import GitRepo, GitRepoBranchNotFoundException
-from .multimodal_part import MultimodalPart
+from .multimodal_part import MultimodalPart, MultiModalPartFile
 from .image_part import ImageFile
 from .audio_part import AudioFile
 from .pdf_part import PdfFile
@@ -15,4 +15,5 @@ __all__ = [
     "AudioFile",
     "VideoFile",
     "MultimodalPartFactory",
+    "MultiModalPartFile",
 ]

@@ -117,7 +117,7 @@ class MultiRetrievalQAChain(MultiRouteChain):
         )
 
 
-class AgenticRAG:
+class AgenticRoutingRAG:
     """
     A RAG model for summarization.
     """

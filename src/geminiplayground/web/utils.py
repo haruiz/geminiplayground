@@ -60,14 +60,14 @@ async def process_multimodal_part(part, files_dir, repos_dir):
             if content_type in ["image", "video", "audio", "pdf"]:
                 file_path = files_dir.joinpath(part_entry.name)
                 multimodal_part = MultimodalPartFactory.from_path(file_path)
-                parts.extend(multimodal_part.content_parts())
+                parts.extend(multimodal_part.prompt_parts())
             elif content_type == "repo":
                 repo_folder = repos_dir.joinpath(part_entry.name)
                 repo = GitRepo.from_folder(
                     repo_folder,
-                    config={"content": "code-files", "file_extensions": [".py"]},
+                    config={"content": "code-files"},
                 )
-                parts.extend(repo.content_parts())
+                parts.extend(repo.prompt_parts())
             else:
                 raise ValueError(f"Unsupported content type: {content_type}")
     return parts

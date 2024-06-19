@@ -1,6 +1,7 @@
 import inspect
 import typing
 
+from PIL.Image import Image
 from google.generativeai.types import File, FunctionDeclaration
 from datetime import datetime, timezone
 from pathlib import Path
@@ -156,9 +157,9 @@ class LibUtils:
             if isinstance(part, str):
                 normalized_prompt.append(part)
             elif isinstance(part, MultimodalPart):
-                content_parts = part.content_parts()
+                content_parts = part.prompt_parts()
                 normalized_prompt.extend(content_parts)
-            elif isinstance(part, File):
+            elif isinstance(part, (File, Image)):
                 normalized_prompt.append(part)
             else:
                 raise ValueError(f"Invalid prompt part: {part}")

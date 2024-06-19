@@ -63,10 +63,25 @@ class GitUtils:
         :return: True if the given folder is a repor or false otherwise
         """
         try:
+            if not Path(path).exists():
+                raise Exception(f"Path {path} does not exist")
             _ = git.Repo(path).git_dir
             return True
         except (git.exc.InvalidGitRepositoryError, Exception):
             return False
+
+    @staticmethod
+    def validate_repo_folder(repo_folder: typing.Union[str, Path]) -> Path:
+        """
+        Validate the repo folder
+        """
+        repo_folder = Path(repo_folder).resolve(strict=True)
+        if not repo_folder.exists():
+            raise FileNotFoundError(f"{repo_folder} does not exist")
+        if not GitUtils.folder_contains_git_repo(repo_folder):
+            raise ValueError(f"{repo_folder} is not a git repository")
+
+        return repo_folder
 
     @staticmethod
     def get_repo_name_from_url(url: str) -> str:

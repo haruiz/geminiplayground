@@ -49,6 +49,8 @@ opencv-python = "^4.10.0.82"
 tiktoken = "^0.7.0"
 seaborn = "^0.13.2"
 faiss-cpu = "^1.8.0"
+yaspin = "^3.0.2"
+python-slugify = "^8.0.4"
 
 [tool.poetry.group.rag]
 optional = true

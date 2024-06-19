@@ -45,7 +45,9 @@ class FileUtils:
         try:
             yield name
         finally:
-            cls.rm_tree(name)
+            cls.clear_folder(name)
+            if os.path.exists(name):
+                os.rmdir(name)
 
     @staticmethod
     @contextmanager

@@ -1,2 +1,2 @@
 from .summarization_rag import SummarizationRAG
-from .agentic_rag import AgenticRAG
+from .agentic_routing_rag import AgenticRoutingRAG

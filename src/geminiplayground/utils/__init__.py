@@ -6,6 +6,7 @@ from .file_utils import FileUtils
 from .lib_utils import LibUtils
 from .video_utils import VideoUtils
 from .pdf_utils import PDFUtils
+from .cacheable import Cacheable
 
 __all__ = [
     "GitRemoteProgress",
@@ -16,4 +17,5 @@ __all__ = [
     "LibUtils",
     "VideoUtils",
     "PDFUtils",
+    "Cacheable",
 ]

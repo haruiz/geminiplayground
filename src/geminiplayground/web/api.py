@@ -21,6 +21,7 @@ from googleapiclient.errors import HttpError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.concurrency import run_in_threadpool
+from geminiplayground.parts import MultiModalPartFile
 from geminiplayground.core import GeminiClient, GeminiPlayground, ToolCall
 from geminiplayground.utils import (
     GitUtils, VideoUtils, ImageUtils, PDFUtils, LibUtils, FileUtils
@@ -257,8 +258,9 @@ async def upload_file(session: AsyncSession, file_path: Path, content_type: str)
                 thumbnail_img.save(thumbnail_path)
 
         multimodal_part = MultimodalPartFactory.from_path(file_path)
-        multimodal_part.clear_cache()
-        await run_in_threadpool(multimodal_part.upload)
+        if isinstance(multimodal_part, MultiModalPartFile):
+            multimodal_part.clear_cache()
+            await run_in_threadpool(multimodal_part.upload)
         logger.info(f"Uploaded file {file_path}")
         part.status = EntryStatus.READY
         part.status_message = ""
@@ -368,7 +370,8 @@ async def delete_part_handler(
                 multimodal_part = MultimodalPartFactory.from_path(
                     PLAYGROUND_HOME_DIR.joinpath(part_id)
                 )
-                background_tasks.add_task(delete_multimodal_part_files, multimodal_part)
+                if isinstance(multimodal_part, MultiModalPartFile):
+                    background_tasks.add_task(delete_multimodal_part_files, multimodal_part)
                 file = PLAYGROUND_HOME_DIR.joinpath(part_id)
                 if file.exists():
                     file.unlink()

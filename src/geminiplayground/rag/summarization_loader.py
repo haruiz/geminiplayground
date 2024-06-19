@@ -10,7 +10,7 @@ from langchain_core.documents import Document
 from openpyxl.packaging.manifest import mimetypes
 from unstructured.partition.auto import partition
 from google.generativeai import GenerativeModel
-from .caching import cache, cache_func_results
+from .caching import cache
 
 summarization_system_instruction = """
  you are an assistant tasked with summarizing files for retrieval. \
@@ -28,7 +28,7 @@ class SummarizationLoader(BaseLoader):
             model = genai.GenerativeModel(model, system_instruction=summarization_system_instruction)
         self._model = model
 
-    @cache_func_results
+    # @cache_func_results
     def _get_pdf_parts(self, file_path: typing.Union[str, Path]) -> typing.List[Document]:
         """
         extract the parts of a PDF file.

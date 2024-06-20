@@ -21,6 +21,7 @@ poetry.lock
 lib64/
 sdist/
 var/
+.python-version
 wheels/
 .cache/
 share/python-wheels/

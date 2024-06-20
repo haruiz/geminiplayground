@@ -71,4 +71,7 @@ class AgenticToolUseRAG(RAG):
         """
         agent_executor = self.get_runnable()
         result = agent_executor.invoke({"input": question, "chat_history": self._chat_history})
-        return RAGResponse(answer=result["output"], docs=[])
+        return RAGResponse(
+            answer=result["output"],
+            docs=[]
+        )

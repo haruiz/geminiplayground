@@ -126,7 +126,7 @@ class AgenticRoutingRAG(RAG):
         """
         Invoke the RAG model.
         """
-        qa_chain = self.get_chain()
+        qa_chain = self.get_runnable()
         result = qa_chain.invoke({"input": question, "chat_history": self._chat_history})
 
         docs = result.get("source_documents", [])
@@ -137,7 +137,7 @@ class AgenticRoutingRAG(RAG):
             docs=docs
         )
 
-    def get_chain(self):
+    def get_runnable(self):
         """
         Get the chain.
         """

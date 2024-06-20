@@ -1,11 +1,12 @@
 from langchain_core.messages import HumanMessage
+from langchain_core.tools import tool
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_weaviate import WeaviateVectorStore
 
 from geminiplayground.parts import MultimodalPart, ImageFile, AudioFile, GitRepo, PdfFile, VideoFile
 from langchain_core.retrievers import BaseRetriever
 from dotenv import load_dotenv, find_dotenv
-from geminiplayground.rag import SummarizationLoader, AgenticRoutingRAG
+from geminiplayground.rag import SummarizationLoader, AgenticToolUseRAG
 from rich.console import Console
 from langchain_core.vectorstores import VectorStore
 import typing
@@ -35,6 +36,13 @@ class MultiModalSummarizationRetriever(BaseRetriever):
         """
         loader = SummarizationLoader(self.summarization_model, *self.docs)
         docs = loader.load()
+        # Split document into chunks is optional
+        # text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+        # docs = text_splitter.split_documents(docs)
+        # # Here is where we add in the fake source information
+        # for i, doc in enumerate(docs):
+        #     doc.metadata["page_chunk"] = i
+
         self.vectorstore.add_documents(docs, batch_size=self.batch_docs_size)
 
     def _get_relevant_documents(
@@ -49,8 +57,8 @@ class MultiModalSummarizationRetriever(BaseRetriever):
         return docs
 
 
-def create_doc_retriever_from_multimodal_data(docs_index_name: str,
-                                              docs: typing.List[MultimodalPart]):
+def create_retriever_from_multimodal_data(docs_index_name: str,
+                                          docs: typing.List[MultimodalPart]):
     """
     Create a retriever for a document
     """
@@ -74,16 +82,16 @@ if __name__ == '__main__':
     chat_model = ChatGoogleGenerativeAI(model="models/gemini-1.5-flash-latest", temperature=0.0)
 
     retrievers = [{
-        "name": "medial_files",
+        "name": "media_files",
         "description": "This Retriever combine a various media files, including a picture of my dog",
-        "retriever": create_doc_retriever_from_multimodal_data("media_files", [
+        "retriever": create_retriever_from_multimodal_data("media_files", [
             ImageFile("./../data/dog.jpg"),
 
         ])
     }, {
         "name": "code_files",
         "description": "This Retriever contains code from karpathy's ng-video-lecture repo about transformers",
-        "retriever": create_doc_retriever_from_multimodal_data("code_files", [
+        "retriever": create_retriever_from_multimodal_data("code_files", [
             GitRepo.from_url(
                 "https://github.com/karpathy/ng-video-lecture",
                 branch="master",
@@ -94,12 +102,13 @@ if __name__ == '__main__':
     }, {
         "name": "transformer_files",
         "description": "This Retriever contains various media files, relating to transformers and language models",
-        "retriever": create_doc_retriever_from_multimodal_data("pdf_files", [
+        "retriever": create_retriever_from_multimodal_data("pdf_files", [
             VideoFile("./../data/transformers-explained.mp4"),
             PdfFile("./../data/vis-language-model.pdf"),
             AudioFile("./../data/audio_example.mp3")
         ])
     }]
+
 
     # this block of code is used to clear the cache and reindex the documents
     # cache.clear()
@@ -115,15 +124,35 @@ if __name__ == '__main__':
     #     chat_history=[]
     # )
 
-    rag = AgenticRoutingRAG(
+    # rag = AgenticRoutingRAG(
+    #     chat_model=chat_model,
+    #     retrievers_info=retrievers,
+    #     chat_history=[]
+    # )
+
+    @tool
+    def subtract(x: float, y: float) -> float:
+        """Subtract 'x' from 'y'."""
+        return y - x
+
+
+    @tool
+    def sum(x: float, y: float) -> float:
+        """Calculate the percentage difference between 'x' and 'y'."""
+        return x + y
+
+
+    rag = AgenticToolUseRAG(
         chat_model=chat_model,
         retrievers_info=retrievers,
+        custom_tools=[subtract, sum],
         chat_history=[]
     )
 
     while True:
         question = input("Question: ")
         if question.lower() == "exit":
+            print(rag.chat_history)
             weaviate_client.close()
             break
         result = rag.invoke(question)

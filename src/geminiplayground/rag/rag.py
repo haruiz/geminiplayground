@@ -37,9 +37,9 @@ class RAG(ABC):
         return self._chat_history
 
     @abstractmethod
-    def get_chain(self) -> Runnable:
+    def get_runnable(self) -> Runnable:
         """
-        Get the RAG chain.
+        Get the RAG runnable
         """
         raise NotImplementedError("This function must be implemented in the subclass.")
 

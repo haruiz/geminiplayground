@@ -35,6 +35,12 @@ class LOTRRAG(RAG):
         """
         Get the retriever.
         """
+        assert len(self._retrievers_info) > 0, "At least one retriever is required."
+
+        # Single retriever
+        if len(self._retrievers_info) == 1:
+            return self._retrievers_info[0].get("retriever")
+
         # LOTR (Merger Retriever)
         lotr_retriever = MergerRetriever(retrievers=[
             retriever["retriever"] for retriever in self._retrievers_info
@@ -45,14 +51,14 @@ class LOTRRAG(RAG):
         """
         Invoke the RAG model.
         """
-        qa_chain = self.get_chain()
+        qa_chain = self.get_runnable()
         result = qa_chain.invoke({"input": question, "chat_history": self._chat_history})
         return RAGResponse(
             answer=result["answer"],
             docs=result["context"]
         )
 
-    def get_chain(self) -> Runnable:
+    def get_runnable(self) -> Runnable:
         """
         Get the RAG chain.
         """

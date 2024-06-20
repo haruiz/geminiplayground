@@ -1,9 +1,11 @@
 """Use a single chain to route an input to one of multiple retrieval qa chains."""
 from __future__ import annotations
 
+import typing
 from typing import Any, Dict, List, Mapping, Optional
 
-from langchain_core.language_models import BaseLanguageModel
+from langchain_core.language_models import BaseLanguageModel, BaseChatModel
+from langchain_core.messages import HumanMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_core.retrievers import BaseRetriever
 
@@ -17,17 +19,7 @@ from langchain.chains.router.multi_retrieval_prompt import (
     MULTI_RETRIEVAL_ROUTER_TEMPLATE,
 )
 
-from pathlib import Path
-
-from langchain_community.vectorstores import FAISS
-from langchain_core.messages import HumanMessage
-from rich.console import Console
-
-from geminiplayground.rag.scored_retriever import ScoredRetriever
-from geminiplayground.rag.summarization_loader import SummarizationLoader
-
-from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
-import logging
+from .rag import RAG, RAGResponse
 
 
 class MultiRetrievalQAChain(MultiRouteChain):
@@ -117,55 +109,39 @@ class MultiRetrievalQAChain(MultiRouteChain):
         )
 
 
-class AgenticRoutingRAG:
+class AgenticRoutingRAG(RAG):
     """
-    A RAG model for summarization.
+    A RAG implementation using a ROUTER (MultiRetrievalQAChain)
     """
 
-    def __init__(self, summarization_model: str, chat_model: str, embeddings_model: str):
-        self._chat_model = ChatGoogleGenerativeAI(model=chat_model, temperature=0.0)
-        self._embeddings_model = GoogleGenerativeAIEmbeddings(model=embeddings_model, task_type="retrieval_document")
-        self._summarization_model = summarization_model
-        self._batch_docs_size = 50
-        self._files = []
-        self._files_retrievers = []
+    def __init__(
+            self,
+            chat_model: BaseChatModel,
+            retrievers_info: typing.List[dict],
+            chat_history: typing.List[HumanMessage] = None
+    ):
+        super().__init__(chat_model, retrievers_info, chat_history)
 
-    def add_file(self, file_path: str):
+    def invoke(self, question: str) -> RAGResponse:
         """
-        Add a file to the vector index.
+        Invoke the RAG model.
         """
-        file = Path(file_path)
-        if not file.exists():
-            raise FileNotFoundError(f"File {file} not found")
+        qa_chain = self.get_chain()
+        result = qa_chain.invoke({"input": question, "chat_history": self._chat_history})
 
-        supported_extensions = {".pdf", ".mp3", ".wav", ".mp4", ".jpg", ".jpeg", ".png"}
-        if file.suffix not in supported_extensions:
-            raise ValueError(f"File type {file.suffix} not supported")
+        docs = result.get("source_documents", [])
+        answer = result.get("result", None)
 
-        self._files.append(file)
-
-    def index_docs(self):
-        """
-        get retrievers info
-        """
-        for file in self._files:
-            loader = SummarizationLoader(self._summarization_model, file)
-            docs = loader.load()
-            doc_batches = [docs[i:i + self._batch_docs_size] for i in range(0, len(docs), self._batch_docs_size)]
-            vector_store = FAISS.from_documents(doc_batches[0], self._embeddings_model)
-            for batch in doc_batches[1:]:
-                logging.info(f"Adding batch of {len(batch)} documents to vector store")
-                vector_store.add_documents(batch)
-            self._files_retrievers.append({
-                "name": str(file),
-                "description": f"Retriever for file {file}",
-                "retriever": ScoredRetriever(vectorstore=vector_store, k=5),
-            })
+        return RAGResponse(
+            answer=answer,
+            docs=docs
+        )
 
     def get_chain(self):
         """
         Get the chain.
         """
+
         DEFAULT_TEMPLATE = """The following is a friendly conversation between a human and an AI. The AI is talkative 
                 and provides lots of specific details from its context. If the AI does not know the answer to a question, 
                 it truthfully says it does not know.
@@ -179,34 +155,6 @@ class AgenticRoutingRAG:
         )
         default_chain = ConversationChain(llm=self._chat_model, prompt=default_prompt, input_key='query',
                                           output_key='result')
-        return MultiRetrievalQAChain.from_retrievers(llm=self._chat_model, retriever_infos=self._files_retrievers,
+        return MultiRetrievalQAChain.from_retrievers(llm=self._chat_model, retriever_infos=self._retrievers_info,
                                                      default_chain=default_chain,
                                                      verbose=True)
-
-    def invoke(self, question: str, chat_history=None):
-        """
-        Invoke the RAG workflow.
-        """
-        qa_chain = self.get_chain()
-        result = qa_chain.invoke({"input": question, "chat_history": chat_history})
-        return result
-
-    def chat(self, chat_history=None):
-        """
-        Chat with the model.
-        """
-
-        if chat_history is None:
-            chat_history = []
-
-        console = Console()
-        while True:
-            question = input("Question: ")
-            if question.lower() == "exit":
-                break
-            result = self.invoke(question, chat_history)
-            chat_history.extend([HumanMessage(content=question), result["result"]])
-            console.print(f"Answer: {result['result']}")
-            if "source_documents" in result:
-                for doc in result["source_documents"]:
-                    console.print(doc)

@@ -3,6 +3,7 @@ from rich import print
 from geminiplayground.core import GeminiClient
 from geminiplayground.parts import GitRepo
 from dotenv import load_dotenv, find_dotenv
+from geminiplayground.catching import cache
 
 load_dotenv(find_dotenv())
 
@@ -12,6 +13,7 @@ def chat_wit_your_code():
     Get the content parts of a github repo and generate a request.
     :return:
     """
+    cache.clear()
     repo = GitRepo.from_url(
         "https://github.com/karpathy/ng-video-lecture",
         branch="master",

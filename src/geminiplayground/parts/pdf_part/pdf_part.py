@@ -3,14 +3,14 @@ import typing
 
 import pymupdf
 import validators
-from PIL import Image
 
 from geminiplayground.core import GeminiClient
-from .. import MultimodalPart
+from .. import MultimodalPart, ImageFile
 from geminiplayground.utils import FileUtils, Cacheable
 from pathlib import Path
 from geminiplayground.catching import cache
 from slugify import slugify
+from langchain_core.documents import Document
 
 logger = logging.getLogger("rich")
 
@@ -26,7 +26,7 @@ class PdfFile(MultimodalPart):
         self._file_path = file_path
 
     @Cacheable.cache_func
-    def __get_pdf_parts(self) -> typing.List[str]:
+    def __get_pdf_parts(self) -> typing.List[typing.Any]:
         """
         Get the content parts for the pdf
         :return: list of text parts
@@ -36,29 +36,37 @@ class PdfFile(MultimodalPart):
             pdf = pymupdf.open(pdf_path)
             for page_num in range(len(pdf)):
                 page = pdf[page_num]
-                parts.append(self._extract_text_from_page(page))
-                parts.extend(self._extract_images_from_page(pdf, page))
+                parts.append(self._extract_page_content(page))
+                parts.extend(self._extract_page_images(pdf, page))
             pdf.close()
         return parts
 
-    def _extract_text_from_page(self, page):
+    def _extract_page_content(self, page):
         """
         Extract text from a page
         :param page: The page to extract text from
         :return: The extracted text
         """
-        return page.get_text()
+        return Document(
+            page_content=page.get_text(),
+            metadata={
+                "file_path": str(self._file_path),
+                "page_number": page.number,
+                "category": "Text",
+            },
+        )
 
-    def _extract_images_from_page(self, pdf, page):
+    def _extract_page_images(self, pdf, page):
         """
         Extract images from a page
         :param page: The page to extract images from
         :return: The extracted images
         """
-        file_path = Path(self._file_path)
-        if validators.url(str(file_path)):
+        file_path = str(self._file_path)
+        if validators.url(file_path):
             images_folder = Path(slugify(file_path))
         else:
+            file_path = Path(file_path)
             images_folder = file_path.parent / file_path.stem
 
         images_folder.mkdir(exist_ok=True, parents=True)
@@ -71,15 +79,14 @@ class PdfFile(MultimodalPart):
                 pix = pymupdf.Pixmap(pymupdf.csRGB, pix)
             image_path = images_folder / f"image{page.number}.png"
             pix.save(image_path)
-            pillow_image = Image.open(image_path)
-            images.append(pillow_image)
+            image = ImageFile(image_path)
+            images.append(image)
             del pix
         return images
 
-    def prompt_parts(self):
+    def content_parts(self):
         """
         Get the content parts for the pdf
         :return:
         """
-        parts = self.__get_pdf_parts()
-        return parts
+        return self.__get_pdf_parts()

@@ -36,7 +36,7 @@ class VideoFile(MultiModalPartFile):
         system_instruction = """you are a video processing system, follow the instructions and extract the key frames 
         in the provided video, your response should include a description of max 100 characters and the timespan of 
         each key frame"""
-        prompt = ["return the key frames in the following video"] + self.prompt_parts()
+        prompt = ["return the key frames in the following video"] + self.content_parts()
         raw_response = self._gemini_client.generate_response(
             model,
             prompt,

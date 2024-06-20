@@ -1,8 +1,7 @@
-from rich import print
-
 from geminiplayground.core import GeminiClient
 from geminiplayground.parts import PdfFile
 from dotenv import load_dotenv, find_dotenv
+from geminiplayground.catching import cache
 
 load_dotenv(find_dotenv())
 
@@ -12,12 +11,11 @@ def chat_wit_your_pdf():
     Get the content parts of a pdf file and generate a request.
     :return:
     """
-    # cache.clear()
+    cache.clear()
     gemini_client = GeminiClient()
     pdf_file_path = "https://www.tnstate.edu/faculty/fyao/COMP3050/Py-tutorial.pdf"
-    pdf_file_path = "./../data/vis-language-model.pdf"
+    # pdf_file_path = "./../data/vis-language-model.pdf"
     pdf_file = PdfFile(pdf_file_path, gemini_client=gemini_client)
-
     prompt = ["Please create a summary of the pdf file:", pdf_file]
     model_name = "models/gemini-1.5-pro-latest"
     tokens_count = gemini_client.count_tokens(model_name, prompt)

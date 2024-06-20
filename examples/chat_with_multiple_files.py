@@ -4,13 +4,14 @@ from dotenv import load_dotenv, find_dotenv
 from pathlib import Path
 
 from geminiplayground.parts import ImageFile
+from geminiplayground.catching import cache
 
 from geminiplayground.core import GeminiClient
 
 load_dotenv(find_dotenv())
 
 if __name__ == '__main__':
-    # cache.clear()
+    cache.clear()
 
     gemini_client = GeminiClient()
     images = [ImageFile(image_file, gemini_client=gemini_client) for image_file in Path("./../data").glob("*.jpg")]

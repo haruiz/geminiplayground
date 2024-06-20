@@ -13,7 +13,7 @@ def chat_wit_your_audios():
     audio_file_path = "./../data/audio_example.mp3"
     gemini_client = GeminiClient()
     audio_file = AudioFile(audio_file_path, gemini_client=gemini_client)
-    # audio_file.delete()
+    # audio_file.clear_cache()
     prompt = ["Listen this audio:", audio_file, "Describe what you heard"]
     model_name = "models/gemini-1.5-flash-latest"
     tokens_count = gemini_client.count_tokens(model_name, prompt)

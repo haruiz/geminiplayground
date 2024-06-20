@@ -5,6 +5,7 @@ import typing
 from pathlib import Path
 
 from geminiplayground.utils import FileUtils, LibUtils, Cacheable
+from geminiplayground.utils.prompts import SUMMARIZATION_SYSTEM_INSTRUCTION
 from geminiplayground.catching import cache
 from yaspin import yaspin
 
@@ -17,8 +18,19 @@ class MultimodalPart(ABC):
     def __init__(self, gemini_client=None):
         self._gemini_client = gemini_client if gemini_client else GeminiClient()
 
+    def summarize(self, model: str, **kwargs):
+        """
+        Summarize the multimodal part
+        :return:
+        """
+        summarization_prompt = ["Summarize the following content: "] + self.content_parts()
+        summarization_instructions = kwargs.get("summarization_instructions", SUMMARIZATION_SYSTEM_INSTRUCTION)
+        response = self._gemini_client.generate_response(model, summarization_prompt,
+                                                         system_instruction=summarization_instructions, **kwargs)
+        return response.text
+
     @abstractmethod
-    def prompt_parts(self, **kwargs):
+    def content_parts(self, **kwargs):
         """
         transform a multimodal part into a list of content parts
         :param kwargs:
@@ -36,6 +48,10 @@ class MultiModalPartFile(MultimodalPart):
     def __init__(self, file_path: typing.Union[str, Path], gemini_client=None):
         super().__init__(gemini_client)
         self._file_path = file_path
+
+    @property
+    def local_path(self):
+        return self._file_path
 
     @property
     def remote_file(self):
@@ -83,5 +99,5 @@ class MultiModalPartFile(MultimodalPart):
         # this function remove any cache entry for the file
         self.clear_cache()
 
-    def prompt_parts(self, **kwargs):
+    def content_parts(self, **kwargs):
         return [self.remote_file]

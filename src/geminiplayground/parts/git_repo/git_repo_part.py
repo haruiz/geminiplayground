@@ -12,6 +12,7 @@ from geminiplayground.utils import (
     LibUtils,
 )
 from ..multimodal_part import MultimodalPart
+from langchain_core.documents import Document
 import codecs
 
 logger = logging.getLogger("rich")
@@ -112,14 +113,19 @@ class GitRepo(MultimodalPart):
         for file in code_files:
             with codecs.open(file, "r", encoding="utf-8", errors="ignore") as f:
                 code_content = f.read()
-                parts.append(
-                    f"""
-                file: {file}
-                ```python
-                {code_content}
-                ```
-                """
+                doc = Document(
+                    page_content=f"""
+                        file: {file}
+                        ```python
+                        {code_content}
+                        ```
+                        """,
+                    metadata={
+                        "file_path": str(file),
+                        "category": "Code",
+                    },
                 )
+                parts.append(doc)
         return parts
 
     def __get_parts_from_repos_issues(self):
@@ -139,26 +145,27 @@ class GitRepo(MultimodalPart):
         issues = remote_repo.get_issues(state=issues_state)
         parts = []
         for issue in issues:
-            parts.append(
-                f"""
-            issue: {issue.title}
-            {issue.body}
-            """
+            doc = Document(
+                page_content=f"""
+                issue: {issue.title}
+                {issue.body}
+                """,
+                metadata={
+                    "issue": issue.title,
+                    "category": "Issue",
+                },
             )
+            parts.append(doc)
         return parts
 
-    def prompt_parts(self):
+    def content_parts(self):
         """
         Get the content parts for the repo
         :return:
         """
-        try:
-            functions_map = {
-                "code-files": self.__get_parts_from_code_files,
-                "issues": self.__get_parts_from_repos_issues,
-            }
-            parts = functions_map[self._search_content_type]()
-            return parts
-        except Exception as e:
-            logger.error(e)
-            raise e
+        functions_map = {
+            "code-files": self.__get_parts_from_code_files,
+            "issues": self.__get_parts_from_repos_issues,
+        }
+        parts = functions_map[self._search_content_type]()
+        return parts

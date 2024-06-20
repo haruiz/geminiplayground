@@ -3,8 +3,11 @@ from rich import print
 from geminiplayground.core import GeminiClient
 from geminiplayground.parts import GitRepo
 from dotenv import load_dotenv, find_dotenv
+from geminiplayground.catching import cache
 
 load_dotenv(find_dotenv())
+
+cache.clear()
 
 
 def chat_wit_your_code():

@@ -1,5 +1,8 @@
 import functools
 from diskcache import Cache
+import logging
+
+logger = logging.getLogger("rich")
 
 
 class Cacheable:
@@ -37,14 +40,13 @@ class Cacheable:
                 f"{self.__class__.__name__}_{func.__name__}_{args}_{kwargs}"
             )
             cache_entry_tag = str(getattr(self, self._cache_tag_attr))
-            print("cache_entry_tag", cache_entry_tag)
             cached_result, cached_result_tag = self._cache.get(cache_entry_key, tag=cache_entry_tag)
 
             if cache_entry_key in self._cache and cached_result_tag == cache_entry_tag:
-                print(f"Loading cached results for {cache_entry_key}")
+                logger.info(f"Loading cached results for {cache_entry_key}")
                 return cached_result
 
-            print(
+            logger.info(
                 f"No cache found for {cache_entry_key}. Computing results and saving to cache. This may take a while."
             )
             result = func(self, *args, **kwargs)
@@ -58,7 +60,7 @@ class Cacheable:
             """
             Clear the cache for this file.
             """
-            print(f"Clearing cache for {self.__class__.__name__}")
+            logger.info(f"Clearing cache for {self.__class__.__name__}")
             cache_tag = str(getattr(self, self._cache_tag_attr))
             self._cache.evict(tag=cache_tag)
 

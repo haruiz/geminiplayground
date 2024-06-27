@@ -70,6 +70,7 @@ class AgenticToolUseRAG(RAG):
         Invoke the RAG model.
         """
         agent_executor = self.get_runnable()
+        print("Chat history:", self._chat_history)
         result = agent_executor.invoke({"input": question, "chat_history": self._chat_history})
         return RAGResponse(
             answer=result["output"],

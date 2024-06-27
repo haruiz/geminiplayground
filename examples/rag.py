@@ -36,13 +36,6 @@ class MultiModalSummarizationRetriever(BaseRetriever):
         """
         loader = SummarizationLoader(self.summarization_model, *self.docs)
         docs = loader.load()
-        # Split document into chunks is optional
-        # text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-        # docs = text_splitter.split_documents(docs)
-        # # Here is where we add in the fake source information
-        # for i, doc in enumerate(docs):
-        #     doc.metadata["page_chunk"] = i
-
         self.vectorstore.add_documents(docs, batch_size=self.batch_docs_size)
 
     def _get_relevant_documents(
@@ -109,14 +102,10 @@ if __name__ == '__main__':
         ])
     }]
 
+    # Index all the documents in the retrievers
+    for retriever in retrievers:
+        retriever["retriever"].index_docs()
 
-    # this block of code is used to clear the cache and reindex the documents
-    # cache.clear()
-    # collections = weaviate_client.collections.list_all()
-    # for collection_name in collections:
-    #     weaviate_client.collections.delete(collection_name)
-    # for retriever in retrievers:
-    #     retriever["retriever"].index_docs()
 
     # rag = LOTRRAG(
     #     chat_model=chat_model,
@@ -146,8 +135,9 @@ if __name__ == '__main__':
         chat_model=chat_model,
         retrievers_info=retrievers,
         custom_tools=[subtract, sum],
-        chat_history=[]
-    )
+        chat_history=[
+            HumanMessage(content="Hello, I am a Henry Ruiz")
+        ])
 
     while True:
         question = input("Question: ")

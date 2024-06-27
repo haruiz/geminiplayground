@@ -126,8 +126,8 @@ if __name__ == '__main__':
 
 
     @tool
-    def sum(x: float, y: float) -> float:
-        """Calculate the percentage difference between 'x' and 'y'."""
+    def add(x: float, y: float) -> float:
+        """ Add 'x' and 'y'."""
         return x + y
 
 
@@ -135,9 +135,7 @@ if __name__ == '__main__':
         chat_model=chat_model,
         retrievers_info=retrievers,
         custom_tools=[subtract, sum],
-        chat_history=[
-            HumanMessage(content="Hello, I am a Henry Ruiz")
-        ])
+        chat_history=[])
 
     while True:
         question = input("Question: ")

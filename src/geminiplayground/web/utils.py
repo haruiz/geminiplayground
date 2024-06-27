@@ -65,7 +65,7 @@ async def process_multimodal_part(part, files_dir, repos_dir):
                 repo_folder = repos_dir.joinpath(part_entry.name)
                 repo = GitRepo.from_folder(
                     repo_folder,
-                    config={"content": "code-files", "file_extensions": [".py"]},
+                    config={"content": "code-files"},
                 )
                 parts.extend(repo.content_parts())
             else:

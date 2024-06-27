@@ -21,6 +21,7 @@ poetry.lock
 lib64/
 sdist/
 var/
+.python-version
 wheels/
 .cache/
 share/python-wheels/
@@ -30,6 +31,7 @@ share/python-wheels/
 .idea
 .DS_Store
 MANIFEST
+data/vis-language-model.pdf
 
 
 # PyInstaller

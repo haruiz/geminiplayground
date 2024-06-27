@@ -31,6 +31,6 @@ if __name__ == "__main__":
 
     # Print the response
     for candidate in response.candidates:
-        for part in candidate.content.parts:
+        for part in candidate._search_content_type.parts:
             if part.text:
                 print(part.text)

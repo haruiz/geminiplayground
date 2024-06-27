@@ -25,6 +25,6 @@ response = gemini_client.generate_response("models/gemini-1.5-pro-latest", multi
 
 # Print the response
 for candidate in response.candidates:
-    for part in candidate.content.parts:
+    for part in candidate._search_content_type.parts:
         if part.text:
             print(part.text)

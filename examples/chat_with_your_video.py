@@ -13,7 +13,7 @@ def chat_wit_your_video():
     :return:
     """
     gemini_client = GeminiClient()
-    model_name = "models/gemini-1.5-pro-latest"
+    model_name = "models/gemini-1.5-flash-latest"
 
     video_file_path = "./../data/transformers-explained.mp4"
     video_file = VideoFile(video_file_path, gemini_client=gemini_client)
@@ -30,7 +30,7 @@ def chat_wit_your_video():
     response = gemini_client.generate_response(model_name, prompt, stream=True)
     for message_chunk in response:
         if message_chunk.parts:
-            print(message_chunk.text)
+            print(message_chunk.text, end="")
 
 
 if __name__ == "__main__":

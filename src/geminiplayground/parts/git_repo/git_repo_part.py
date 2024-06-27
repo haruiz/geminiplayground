@@ -12,6 +12,7 @@ from geminiplayground.utils import (
     LibUtils,
 )
 from ..multimodal_part import MultimodalPart
+from langchain_core.documents import Document
 import codecs
 
 logger = logging.getLogger("rich")
@@ -26,36 +27,22 @@ class GitRepo(MultimodalPart):
     Git Repo Part implementation
     """
 
-    def __init__(self, repo_folder: typing.Union[str, Path], **kwargs):
+    def __init__(self, repo_folder: typing.Union[str, Path], gemini_client: GeminiClient = None, **kwargs):
         # set the output directory for the repos
-        try:
-            repo_folder = Path(repo_folder).resolve(strict=True)
-            logger.info(f"Checking if {repo_folder} is a git repository")
+        super().__init__(gemini_client)
+        self._repo_folder = GitUtils.validate_repo_folder(repo_folder)
+        self._repo = git.Repo(repo_folder)
+        self._search_settings = kwargs.get("config", {"content": "code-files"})
+        self._search_content_type = self._search_settings["content"]
 
-            assert repo_folder.exists(), f"{repo_folder} does not exist"
-            assert GitUtils.folder_contains_git_repo(
-                repo_folder
-            ), f"{repo_folder} is not a git repository"
+        valid_search_options = {"code-files", "issues"}
+        if self._search_content_type not in valid_search_options:
+            raise ValueError(
+                f"Invalid content {self._search_content_type}, should be code-files or issues"
+            )
 
-            self.repo_folder = repo_folder
-            self.repo = git.Repo(repo_folder)
-            self.gemini_client = kwargs.get("gemini_client", GeminiClient())
-
-            self.config = kwargs.setdefault("config", {"content": "code-files"})
-            self.content = self.config.get("content", "code-files")
-
-            logger.info(f"Repo folder: {self.repo_folder}")
-            logger.info(f"Content: {self.content}")
-            logger.info(f"Config: {self.config}")
-
-            valid_contents = {"code-files", "issues"}
-            if self.content not in valid_contents:
-                raise ValueError(
-                    f"Invalid content {self.content}, should be code-files or issues"
-                )
-        except Exception as e:
-            logger.error(e)
-            raise e
+        logger.info(f"Repo folder: {self._repo_folder}")
+        logger.info(f"Content: {self._search_content_type}")
 
     @classmethod
     def from_folder(cls, folder: typing.Union[str, Path], **kwargs):
@@ -109,7 +96,6 @@ class GitRepo(MultimodalPart):
                 logger.error(e)
                 raise e
         config = kwargs.setdefault("config", {"content": "code-files"})
-        print(repo_folder, config)
         return cls(repo_folder, config=config)
 
     def __get_parts_from_code_files(self):
@@ -117,24 +103,29 @@ class GitRepo(MultimodalPart):
         Get the code parts from the repo
         :return:
         """
-        file_extensions = self.config.get("file_extensions", None)
-        exclude_dirs = self.config.get("exclude_dirs", None)
+        file_extensions = self._search_settings.get("file_extensions", None)
+        exclude_dirs = self._search_settings.get("exclude_dirs", None)
 
         code_files = GitUtils.get_code_files_in_dir(
-            self.repo_folder, file_extensions, exclude_dirs
+            self._repo_folder, file_extensions, exclude_dirs
         )
         parts = []
         for file in code_files:
             with codecs.open(file, "r", encoding="utf-8", errors="ignore") as f:
                 code_content = f.read()
-                parts.append(
-                    f"""
-                file: {file}
-                ```python
-                {code_content}
-                ```
-                """
+                doc = Document(
+                    page_content=f"""
+                        file: {file}
+                        ```python
+                        {code_content}
+                        ```
+                        """,
+                    metadata={
+                        "file_path": str(file),
+                        "category": "Code",
+                    },
                 )
+                parts.append(doc)
         return parts
 
     def __get_parts_from_repos_issues(self):
@@ -142,9 +133,9 @@ class GitRepo(MultimodalPart):
         Get the issues from the repo
         :return:
         """
-        issues_state = self.config.get("issues_state", "open")
+        issues_state = self._search_settings.get("issues_state", "open")
 
-        remotes = self.repo.remotes
+        remotes = self._repo.remotes
         assert len(remotes) > 0, "No remotes found"
         remote = remotes[0]
         url = remote.url
@@ -154,12 +145,17 @@ class GitRepo(MultimodalPart):
         issues = remote_repo.get_issues(state=issues_state)
         parts = []
         for issue in issues:
-            parts.append(
-                f"""
-            issue: {issue.title}
-            {issue.body}
-            """
+            doc = Document(
+                page_content=f"""
+                issue: {issue.title}
+                {issue.body}
+                """,
+                metadata={
+                    "issue": issue.title,
+                    "category": "Issue",
+                },
             )
+            parts.append(doc)
         return parts
 
     def content_parts(self):
@@ -167,12 +163,9 @@ class GitRepo(MultimodalPart):
         Get the content parts for the repo
         :return:
         """
-        try:
-            functions_map = {
-                "code-files": self.__get_parts_from_code_files,
-                "issues": self.__get_parts_from_repos_issues,
-            }
-            return functions_map[self.content]()
-        except Exception as e:
-            logger.error(e)
-            raise e
+        functions_map = {
+            "code-files": self.__get_parts_from_code_files,
+            "issues": self.__get_parts_from_repos_issues,
+        }
+        parts = functions_map[self._search_content_type]()
+        return parts

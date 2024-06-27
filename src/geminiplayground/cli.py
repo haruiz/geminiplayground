@@ -1,6 +1,7 @@
 import os
 import typer
 from typing_extensions import Annotated
+from geminiplayground.catching import cache
 
 cli = typer.Typer(invoke_without_command=True)
 
@@ -75,6 +76,16 @@ def api(
         workers=workers,
         reload=reload,
     )
+
+
+@cli.command(
+    name="clear-cache"
+)
+def clear_cache():
+    """
+    Clear the cache
+    """
+    cache.clear()
 
 
 def run():

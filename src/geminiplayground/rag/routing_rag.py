@@ -109,7 +109,7 @@ class MultiRetrievalQAChain(MultiRouteChain):
         )
 
 
-class AgenticRoutingRAG(RAG):
+class RoutingRAG(RAG):
     """
     A RAG implementation using a ROUTER (MultiRetrievalQAChain)
     """

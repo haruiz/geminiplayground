@@ -14,8 +14,6 @@ from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
 import weaviate
 
-# from geminiplayground.catching import cache
-
 console = Console()
 
 load_dotenv(find_dotenv())
@@ -113,7 +111,7 @@ if __name__ == '__main__':
     #     chat_history=[]
     # )
 
-    # rag = AgenticRoutingRAG(
+    # rag = RoutingRAG(
     #     chat_model=chat_model,
     #     retrievers_info=retrievers,
     #     chat_history=[]

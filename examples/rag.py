@@ -46,7 +46,6 @@ class MultiModalSummarizationRetriever(BaseRetriever):
         )
         for doc, score in zip(docs, scores):
             doc.metadata["score"] = score
-
         return docs
 
 
@@ -102,10 +101,11 @@ if __name__ == '__main__':
         ])
     }]
 
-    # Index all the documents in the retrievers
-    for retriever in retrievers:
-        retriever["retriever"].index_docs()
 
+    # weaviate_client.collections.delete_all()
+    # # Index all the documents in the retrievers
+    # for retriever in retrievers:
+    #     retriever["retriever"].index_docs()
 
     # rag = LOTRRAG(
     #     chat_model=chat_model,
@@ -126,7 +126,7 @@ if __name__ == '__main__':
 
 
     @tool
-    def sum(x: float, y: float) -> float:
+    def add(x: float, y: float) -> float:
         """Calculate the percentage difference between 'x' and 'y'."""
         return x + y
 
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     rag = AgenticToolUseRAG(
         chat_model=chat_model,
         retrievers_info=retrievers,
-        custom_tools=[subtract, sum],
+        custom_tools=[subtract, add],
         chat_history=[
             HumanMessage(content="Hello, I am a Henry Ruiz")
         ])

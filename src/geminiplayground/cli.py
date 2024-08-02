@@ -36,7 +36,7 @@ def dispatch_fastapi_app(
 
     if workers is None:
         cpu_count = os.cpu_count() or 1
-        workers = 1  # cpu_count * 2 + 1
+        workers = cpu_count * 2 + 1
 
     uvicorn.run(
         app,

@@ -14,8 +14,6 @@ from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
 import weaviate
 
-# from geminiplayground.catching import cache
-
 console = Console()
 
 load_dotenv(find_dotenv())

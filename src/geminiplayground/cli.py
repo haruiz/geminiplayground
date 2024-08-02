@@ -95,6 +95,16 @@ def clear_cache():
     cache.clear()
 
 
+@cli.command(
+    name="clear-cache"
+)
+def clear_cache():
+    """
+    Clear the cache
+    """
+    cache.clear()
+
+
 def run():
     """
     Run the app

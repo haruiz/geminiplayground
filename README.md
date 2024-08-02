@@ -262,7 +262,6 @@ if __name__ == "__main__":
 from dotenv import load_dotenv, find_dotenv
 
 from geminiplayground.core import GeminiPlayground, Message, ToolCall
-from geminiplayground.parts import ImageFile
 
 load_dotenv(find_dotenv())
 
@@ -285,13 +284,6 @@ if __name__ == "__main__":
 
 
     chat = playground.start_chat(history=[])
-
-    image = ImageFile("./data/dog.jpg")
-    ai_message = chat.send_message(["can you describe the following image: ", image], stream=True)
-    for response_chunk in ai_message:
-        if isinstance(response_chunk, Message):
-            print(response_chunk.text, end="")
-    print()
     while True:
         user_input = input("You: ")
         if user_input == "exit":

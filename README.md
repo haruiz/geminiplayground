@@ -81,7 +81,7 @@ response = gemini_client.generate_response("models/gemini-1.5-pro-latest", multi
                                            generation_config={"temperature": 0.0, "top_p": 1.0})
 # Print the response
 for candidate in response.candidates:
-    for part in candidate._search_content_type.parts:
+    for part in candidate.parts:
         if part.text:
             print(part.text)
 ```
@@ -285,6 +285,13 @@ if __name__ == "__main__":
 
 
     chat = playground.start_chat(history=[])
+
+    image = ImageFile("./data/dog.jpg")
+    ai_message = chat.send_message(["can you describe the following image: ", image], stream=True)
+    for response_chunk in ai_message:
+        if isinstance(response_chunk, Message):
+            print(response_chunk.text, end="")
+    print()
     while True:
         user_input = input("You: ")
         if user_input == "exit":

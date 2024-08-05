@@ -20,14 +20,14 @@ def check_api_key():
     api_key = os.environ.get("GOOGLE_API_KEY", None)
     if not api_key:
         typer.echo(
-            "Please set the AISTUDIO_API_KEY environment variable, or create a .env file with the api key obtained "
+            "Please set the GOOGLE_API_KEY environment variable, or create a .env file with the api key obtained "
             "from https://aistudio.google.com/app/apikey"
         )
         raise typer.Abort()
 
 
 def dispatch_fastapi_app(
-        app: str, host: str, port: int, workers: typing.Optional[int], reload: bool = True
+        app: str, host: str, port: int, workers: typing.Optional[int], reload: bool = False
 ):
     """
     Launch the app
@@ -51,8 +51,8 @@ def dispatch_fastapi_app(
 def ui(
         host: str = "localhost",
         port: int = 8080,
-        workers: typing.Optional[int] = None,
-        reload: Annotated[bool, typer.Option("--reload")] = True,
+        workers: typing.Optional[int] = 1,
+        reload: Annotated[bool, typer.Option("--reload")] = False,
         api_key: str = typer.Option(None, envvar="GOOGLE_API_KEY")
 ):
     """
@@ -70,8 +70,8 @@ def ui(
 def api(
         host: str = "0.0.0.0",
         port: int = 8080,
-        workers: int = os.cpu_count() * 2 + 1,
-        reload: Annotated[bool, typer.Option("--reload")] = True,
+        workers: typing.Optional[int] = 1,
+        reload: Annotated[bool, typer.Option("--reload")] = False,
         api_key: str = typer.Option(None, envvar="GOOGLE_API_KEY")
 ):
     """

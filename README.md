@@ -40,7 +40,7 @@ pip install geminiplayground
 
 1. **Set up your API key:**
     * Obtain an API key from Google AI-Studio.
-    * Set the `AISTUDIO_API_KEY` environment variable with your API
+    * Set the `GEMINI_API_KEY` environment variable with your API
       key.
 
 2. **Create a `GeminiClient` instance:**
@@ -306,7 +306,7 @@ advanced functionalities and examples.
 ### GUI
 
 You can also use the GUI to interact with Gemini.
-Remember to set the `AISTUDIO_API_KEY` environment variable with your API key. You can do so globally, pass it as an
+Remember to set the `GEMINI_API_KEY` environment variable with your API key. You can do so globally, pass it as an
 argument to the command, or create a `.env` file in the root of your project and set the `AISTUDIO_API_KEY` variable
 there.
 
@@ -319,7 +319,8 @@ geminiplayground ui
 or
 
 ```bash
-geminiplayground ui --api-key YOUR_API_KEY
+export GEMINI_API_KEY=<YOUR_API_KEY>
+geminiplayground ui
 ```
 
 This will start a local server and open the GUI in your default browser.

@@ -14,7 +14,7 @@ def chat_wit_your_images():
     """
     gemini_client = GeminiClient()
 
-    image_file_path = "https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png"
+    image_file_path = "./../data/roses.jpg"
     image_file = ImageFile(image_file_path, gemini_client=gemini_client)
     prompt = ["what do you see in this image?", image_file]
     model_name = "models/gemini-1.5-flash-latest"
@@ -22,7 +22,7 @@ def chat_wit_your_images():
     print(f"Tokens count: {tokens_count}")
     response = gemini_client.generate_response(model_name, prompt, stream=True)
     for message_chunk in response:
-        if message_chunk.parts:
+        if message_chunk:
             print(message_chunk.text, end="")
 
 

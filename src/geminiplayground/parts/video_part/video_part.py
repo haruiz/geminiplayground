@@ -1,51 +1,73 @@
 import json
 import logging
-import typing
+from pathlib import Path
+from typing import Union
 
-from pydantic import BaseModel
+from google.genai.types import GenerateContentConfig
+from pydantic import BaseModel, ValidationError
 
 from ..multimodal_part import MultiModalPartFile
-from pathlib import Path
-import google.generativeai as genai
 
 logger = logging.getLogger("rich")
 
 
+class VideoKeyFrame(BaseModel):
+    """
+    A keyframe segment identified in the video.
+    """
+    timespan: str
+    description: str
+
+
 class VideoFile(MultiModalPartFile):
     """
-    Audio file part implementation
+    Represents a video file used in multimodal prompting.
+
+    Provides utilities to extract keyframes using Gemini.
     """
 
-    def __init__(self, file_path: typing.Union[str, Path], gemini_client=None, **kwargs):
+    def __init__(self, file_path: Union[str, Path], gemini_client=None, **kwargs):
         super().__init__(file_path, gemini_client)
 
-    def extract_keyframes(self, model: str = "models/gemini-1.5-flash-latest"):
+    def extract_keyframes(
+            self,
+            model: str = "models/gemini-1.5-flash-latest"
+    ) -> list[VideoKeyFrame]:
         """
-        Get the timeline of the video
-        :return:
+        Use Gemini to extract keyframes from a video.
+
+        Args:
+            model: Gemini model to use (default: Gemini 1.5 Flash).
+
+        Returns:
+            A list of VideoKeyFrame objects.
+
+        Raises:
+            ValueError: If the response is not valid JSON or doesn't match the expected schema.
         """
+        system_instruction = (
+            "You are a video processing system. Extract the keyframes in the provided video. "
+            "Each keyframe should include a timespan and a description (max 100 characters). "
+            "Respond using JSON."
+        )
 
-        class VideoKeyFrame(BaseModel):
-            """
-            Video key frame
-            """
+        prompt = ["Return the keyframes in the following video:"] + self.content_parts()
 
-            timespan: str
-            description: str
-
-        system_instruction = """you are a video processing system, follow the instructions and extract the key frames 
-        in the provided video, your response should include a description of max 100 characters and the timespan of 
-        each key frame"""
-        prompt = ["return the key frames in the following video"] + self.content_parts()
+        logger.info(f"Sending video to Gemini model: {model}")
         raw_response = self._gemini_client.generate_response(
-            model,
-            prompt,
+            model=model,
+            prompt=prompt,
             stream=False,
-            system_instruction=system_instruction,
-            generation_config=genai.GenerationConfig(
+            config=GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=list[VideoKeyFrame],
+                system_instruction=system_instruction
             ),
         )
-        response = json.loads(raw_response.text)
-        return response["key_frames"]
+
+        try:
+            data = json.loads(raw_response.text)
+            return [VideoKeyFrame(**frame) for frame in data]
+        except (json.JSONDecodeError, ValidationError, TypeError) as e:
+            logger.error(f"Failed to parse keyframes: {e}")
+            raise ValueError("Invalid response format received from Gemini.")

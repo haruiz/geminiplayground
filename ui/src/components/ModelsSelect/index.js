@@ -3,6 +3,7 @@ import {axiosInstance} from "@/app/axios";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {BotIcon} from "lucide-react";
 import {FormControl} from "@/components/ui/form";
+import {useMemo} from "react";
 
 function beautifyNumber(number) {
     // Check if the input is a number
@@ -20,51 +21,75 @@ function beautifyNumber(number) {
     }
 }
 
-export default function ModelsSelect({...props}) {
-    const {data: modelsData, isLoading, refetch} = useQuery({
-        queryKey: ['models'],
+export default function ModelsSelect(props) {
+    const {data: modelsData = [], isLoading} = useQuery({
+        queryKey: ["models"],
         queryFn: async () => {
-            const {data} = await axiosInstance.get('/models');
+            const {data} = await axiosInstance.get("/models");
             return data;
         },
-        select: data => data.filter(({supported_generation_methods}) => supported_generation_methods.includes("generateContent"))
+        select: (data) =>
+            data.filter(({supportedActions}) =>
+                supportedActions.includes("generateContent")
+            ),
     });
 
-
-    return (<Select  {...props} >
-        <FormControl>
-            <SelectTrigger
-                className="flex items-stretch [&_[data-description]]:hidden [&_[data-displayname]]:group-hover:flex min-w-[300px]">
-                <SelectValue placeholder="Select a model"/>
-            </SelectTrigger>
-        </FormControl>
-        <SelectContent>
-            {modelsData?.map(({name, display_name, description, input_token_limit, output_token_limit}) => (
+    const options = useMemo(() => {
+        return modelsData.map(
+            ({
+                 name,
+                 displayName,
+                 description,
+                 inputTokenLimit,
+                 outputTokenLimit,
+             }) => (
                 <SelectItem key={name} value={name}>
-                    <div className="flex items-start gap-3 text-muted-foreground w-[300px]">
+                    <div className="flex items-start gap-3 text-muted-foreground w-[300px] p-0 m-0">
                         <BotIcon/>
                         <div className="flow flow-col gap-0.5">
-                            <p>
-                                {name}
-                            </p>
-                            <p className="text-xs" data-displayname>
-                                <span className="font-medium text-foreground">{display_name}</span>
-                            </p>
-                            <p className="text-xs" data-description>
-                                {description}
-                            </p>
-                            <p className="text-xs" data-inputtokens>
-                                <span className="font-medium text-foreground">Input tokens:</span>{' '}
-                                <span className="text-muted-foreground">{beautifyNumber(input_token_limit)}</span>
-                            </p>
-                            <p className="text-xs" data-outputtokens>
-                                <span className="font-medium text-foreground">Output tokens:</span>{' '}
-                                <span className="text-muted-foreground">{beautifyNumber(output_token_limit)}</span>
-                            </p>
+                            <p className="text-sm text-foreground font-medium">{name}</p>
+                            <div data-details>
+                                <p className="text-xs">
+                                    <span className="font-medium text-foreground">{displayName}</span>
+                                </p>
+                                <p className="text-xs">
+                                    {description}
+                                </p>
+                                <p className="text-xs">
+                                    <span className="font-medium text-foreground">Input tokens:</span>{' '}
+                                    <span className="text-muted-foreground">{beautifyNumber(inputTokenLimit)}</span>
+                                </p>
+                                <p className="text-xs">
+                                    <span className="font-medium text-foreground">Output tokens:</span>{' '}
+                                    <span className="text-muted-foreground">{beautifyNumber(outputTokenLimit)}</span>
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </SelectItem>
-            ))}
-        </SelectContent>
-    </Select>);
+            )
+        );
+    }, [modelsData]);
+
+    return (
+        <Select {...props}>
+            <FormControl>
+                <SelectTrigger
+                    className="flex items-stretch [&_[data-details]]:hidden  min-w-[300px]">
+                    <SelectValue
+                        placeholder={isLoading ? "Loading models..." : "Select a model"}
+                    />
+                </SelectTrigger>
+            </FormControl>
+            <SelectContent>
+                {isLoading ? (
+                    <SelectItem disabled value="loading">
+                        Loading...
+                    </SelectItem>
+                ) : (
+                    options
+                )}
+            </SelectContent>
+        </Select>
+    );
 }

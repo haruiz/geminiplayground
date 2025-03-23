@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
 
@@ -29,7 +30,8 @@ class MultimodalPartEntry(Base):
     name: Mapped[str] = mapped_column(primary_key=True)
     content_type: Mapped[str] = mapped_column()
     status: Mapped[EntryStatus] = mapped_column(default=EntryStatus.PENDING)
-    status_message: Mapped[str] = mapped_column(default="")
+    status_message: Mapped[Optional[str]] = mapped_column(nullable=True, default=None)
+    thumbnail: Mapped[Optional[str]] = mapped_column(nullable=True, default=None)
 
     def as_dict(self):
         """

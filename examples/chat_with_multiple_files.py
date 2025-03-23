@@ -22,5 +22,5 @@ if __name__ == '__main__':
     print(f"Tokens count: {tokens_count}")
     response = gemini_client.generate_response(model_name, prompt, stream=True)
     for message_chunk in response:
-        if message_chunk.parts:
+        if message_chunk:
             print(message_chunk.text, end="")

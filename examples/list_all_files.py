@@ -11,4 +11,4 @@ if __name__ == "__main__":
 
     for file in files:
         time_to_expire = arrow.now().fromdate(file.expiration_time).humanize()
-        print(file.name, file.display_name, time_to_expire, file.mime_type, file.uri)
+        print(file.name, time_to_expire, file.mime_type, file.uri)

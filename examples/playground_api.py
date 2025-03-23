@@ -17,8 +17,10 @@ if __name__ == "__main__":
 
 
     @playground.tool
-    def write_poem() -> str:
-        """write a poem"""
+    def write_poem(about: str) -> str:
+        """write a poem
+        @param about: the subject of the poem
+        """
         return "Roses are red, violets are blue, sugar is sweet, and so are you."
 
 
@@ -26,17 +28,10 @@ if __name__ == "__main__":
     while True:
         user_input = input("You: ")
         if user_input == "exit":
-            print(chat.history)
             break
         try:
-            model_response = chat.send_message(user_input, stream=True)
+            model_response = chat.send_message(user_input)
             for response_chunk in model_response:
-                if isinstance(response_chunk, ToolCall):
-                    print(
-                        f"Tool: {response_chunk.tool_name}, "
-                        f"Result: {response_chunk.tool_result}"
-                    )
-                    continue
                 print(response_chunk.text, end="")
             print()
         except Exception as e:

@@ -35,5 +35,5 @@ if __name__ == "__main__":
 
     # Print the response
     for message_chunk in response:
-        if message_chunk.parts:
+        if message_chunk:
             print(message_chunk.text)

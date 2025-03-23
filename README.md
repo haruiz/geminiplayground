@@ -33,7 +33,7 @@ You can find usage examples in the `examples` directory.
 ### Installation
 
 ```bash
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ geminiplayground
+pip install geminiplayground
 ```
 
 ### Usage
@@ -77,13 +77,14 @@ multimodal_prompt = [
 5. **Generate a response:**
 
 ```python
-response = gemini_client.generate_response("models/gemini-1.5-pro-latest", multimodal_prompt,
-                                           generation_config={"temperature": 0.0, "top_p": 1.0})
+response = gemini_client.generate_response(
+    "models/gemini-1.5-pro-latest",
+    multimodal_prompt,
+    stream=True
+)
 # Print the response
-for candidate in response.candidates:
-    for part in candidate.parts:
-        if part.text:
-            print(part.text)
+for chunk in response:
+    print(chunk.text, end="")
 ```
 
 ```text
@@ -135,7 +136,7 @@ def chat_wit_your_code():
 
     # Print the response
     for message_chunk in response:
-        if message_chunk.parts:
+        if message_chunk:
             print(message_chunk.text)
 
 
@@ -162,7 +163,7 @@ def chat_wit_your_video():
     :return:
     """
     gemini_client = GeminiClient()
-    model_name = "models/gemini-1.5-pro-latest"
+    model_name = "models/gemini-2.0-flash-exp"
 
     video_file_path = "./../data/transformers-explained.mp4"
     video_file = VideoFile(video_file_path, gemini_client=gemini_client)
@@ -178,8 +179,8 @@ def chat_wit_your_video():
     print("Tokens count: ", tokens_count)
     response = gemini_client.generate_response(model_name, prompt, stream=True)
     for message_chunk in response:
-        if message_chunk.parts:
-            print(message_chunk.text)
+        if message_chunk:
+            print(message_chunk.text, end="")
 
 
 if __name__ == "__main__":
@@ -205,16 +206,16 @@ def chat_wit_your_images():
     """
     gemini_client = GeminiClient()
 
-    image_file_path = "https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png"
+    image_file_path = "./../data/roses.jpg"
     image_file = ImageFile(image_file_path, gemini_client=gemini_client)
     prompt = ["what do you see in this image?", image_file]
-    model_name = "models/gemini-1.5-pro-latest"
+    model_name = "models/gemini-2.0-flash-exp"
     tokens_count = gemini_client.count_tokens(model_name, prompt)
     print(f"Tokens count: {tokens_count}")
     response = gemini_client.generate_response(model_name, prompt, stream=True)
     for message_chunk in response:
-        if message_chunk.parts:
-            print(message_chunk.text)
+        if message_chunk:
+            print(message_chunk.text, end="")
 
 
 if __name__ == "__main__":
@@ -239,16 +240,15 @@ def chat_wit_your_pdf():
     :return:
     """
     gemini_client = GeminiClient()
-    pdf_file_path = "https://www.tnstate.edu/faculty/fyao/COMP3050/Py-tutorial.pdf"
+    pdf_file_path = "./../data/vis-language-model.pdf"
     pdf_file = PdfFile(pdf_file_path, gemini_client=gemini_client)
-
     prompt = ["Please create a summary of the pdf file:", pdf_file]
-    model_name = "models/gemini-1.5-pro-latest"
+    model_name = "models/gemini-2.0-flash-exp"
     tokens_count = gemini_client.count_tokens(model_name, prompt)
     print(f"Tokens count: {tokens_count}")
     response = gemini_client.generate_response(model_name, prompt, stream=True)
     for message_chunk in response:
-        if message_chunk.parts:
+        if message_chunk:
             print(message_chunk.text)
 
 
@@ -267,7 +267,7 @@ load_dotenv(find_dotenv())
 
 if __name__ == "__main__":
     playground = GeminiPlayground(
-        model="models/gemini-1.5-flash-latest"
+        model="models/gemini-2.0-flash-exp"
     )
 
 
@@ -278,8 +278,10 @@ if __name__ == "__main__":
 
 
     @playground.tool
-    def write_poem() -> str:
-        """write a poem"""
+    def write_poem(about: str) -> str:
+        """write a poem
+        @param about: the subject of the poem
+        """
         return "Roses are red, violets are blue, sugar is sweet, and so are you."
 
 
@@ -287,23 +289,15 @@ if __name__ == "__main__":
     while True:
         user_input = input("You: ")
         if user_input == "exit":
-            print(chat.history)
             break
         try:
-            model_response = chat.send_message(user_input, stream=True)
+            model_response = chat.send_message(user_input)
             for response_chunk in model_response:
-                if isinstance(response_chunk, ToolCall):
-                    print(
-                        f"Tool: {response_chunk.tool_name}, "
-                        f"Result: {response_chunk.tool_result}"
-                    )
-                    continue
                 print(response_chunk.text, end="")
             print()
         except Exception as e:
             print("Something went wrong: ", e)
             break
-
 ```
 
 This is a basic example. Explore the codebase and documentation for more
@@ -329,6 +323,7 @@ geminiplayground ui --api-key YOUR_API_KEY
 ```
 
 This will start a local server and open the GUI in your default browser.
+In case the browser does not open automatically, you can access the GUI by visiting `http://localhost:8080`.
 
 ![Gemini GUI](https://raw.githubusercontent.com/haruiz/geminiplayground/main/images/ui.png)
 

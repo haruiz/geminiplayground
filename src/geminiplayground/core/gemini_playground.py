@@ -1,12 +1,13 @@
+import logging
 import typing
 from pathlib import Path
 
-from google.generativeai.types import Tool
-
-from .gemini_client import GeminiClient
-from geminiplayground.utils import LibUtils
+from google.genai.chats import Chat
+from google.genai.types import Tool, GenerateContentConfig
 from pydantic import BaseModel
-import logging
+
+from geminiplayground.utils import LibUtils
+from .gemini_client import GeminiClient
 
 logger = logging.getLogger("rich")
 
@@ -33,52 +34,38 @@ class ChatSession:
     A chat session with the Gemini model.
     """
 
-    @property
-    def history(self):
-        """
-        Get the chat history.
-        """
-        return self.chat.history
-
-    def __init__(self, model: str, history: list, toolbox: dict, **kwargs):
+    def __init__(self, model: str, history: list, toolbox: dict, *args, **kwargs):
         self.model = model
         self.toolbox = toolbox
-        tools_def = [
-            Tool(
-                function_declarations=[
-                    LibUtils.func_to_tool(tool_func)
-                    for tool_name, tool_func in self.toolbox.items()
-                ]
-            )
-        ]
-        gemini_client = kwargs.pop("gemini_client", GeminiClient())
-        self.chat = gemini_client.start_chat(
-            model=model,
-            history=history,
-            tools=tools_def, **kwargs)
+        self.history = history
+        self.gemini_client = kwargs.pop("gemini_client", GeminiClient(*args, **kwargs))
+        self.chat: Chat = self._create_chat()
 
-    def clear_history(self):
+    def _create_chat(self) -> Chat:
         """
-        Clear the chat history.
+        Creates and initializes the Gemini Chat instance.
         """
-        self.chat.history.clear()
+        tool_configs = list(self.toolbox.values())
+        return self.gemini_client.start_chat(
+            model=self.model,
+            history=self.history,
+            config=GenerateContentConfig(tools=tool_configs),
+        )
 
-    def send_message(self, message: str, stream: bool = True, **kwargs) -> typing.Generator:
+    def reset_chat(self) -> None:
+        """
+        Resets the chat session, clearing history and tools.
+        """
+        self.chat = self._create_chat()
+
+    def send_message(self, message: str, config: GenerateContentConfig = None) -> typing.Generator:
         """
         Send a message to the chat session.
         """
         normalized_message = LibUtils.normalize_prompt(message)
-        response = self.chat.send_message(normalized_message, stream=stream, **kwargs)
-        for response_chunk in response:
-            for part in response_chunk.parts:
-                if fn := part.function_call:
-                    fun_name = fn.name
-                    fun_args = dict(fn.args)
-                    result = self.toolbox[fun_name](**fun_args)
-                    yield ToolCall(tool_name=fun_name, tool_result=result)
-                else:
-                    yield Message(text=part.text)
-        response.resolve()
+        response = self.chat.send_message_stream(normalized_message, config=config)
+        for chunk in response:
+            yield Message(text=chunk.text)
 
 
 class GeminiPlayground:

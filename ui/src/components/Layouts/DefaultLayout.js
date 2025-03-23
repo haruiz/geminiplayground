@@ -6,6 +6,7 @@ import {usePathname, useRouter} from 'next/navigation'
 import Image from "next/image";
 import {Toaster} from "@/components/ui/toaster"
 import {useTheme} from "next-themes";
+import {useEffect, useState} from "react";
 
 function LeftTopNavBar() {
 
@@ -96,14 +97,30 @@ function LeftBottomNav() {
 
 function TopNavBar() {
     const {theme, setTheme} = useTheme();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // Prevent mismatches by waiting for hydration
+    if (!mounted) return null;
 
     return <header className="sticky top-0 z-10 flex h-[60px] items-center gap-1 border-b bg-background px-4">
         <h1 className="text-xl font-semibold">Gemini Playground</h1>
         <Image src="/gemini-logo.svg" width={50} height={50} priority={true} alt={"gemini logo"}/>
         <div className="flex ml-auto gap-1">
-            <Button variant="ghost" size="icon" aria-label="Toggle Theme"
-                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-                {theme === "dark" ? <MoonIcon className="size-5"/> : <SunIcon className="size-5"/>}
+            <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Toggle Theme"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+                {theme === "dark" ? (
+                    <SunIcon className="size-5"/>
+                ) : (
+                    <MoonIcon className="size-5"/>
+                )}
             </Button>
         </div>
     </header>;

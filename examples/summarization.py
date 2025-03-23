@@ -19,9 +19,8 @@ if __name__ == '__main__':
             },
         )
     ]
-    video = VideoFile("./../data/transformers-explained.mp4")
     for content in my_content:
         response = content.summarize(model="models/gemini-1.5-flash-latest", stream=True)
+        # print(response.text)
         for message_chunk in response:
-            if message_chunk.parts:
-                print(message_chunk.text, end="")
+            print(message_chunk.text, end="")

@@ -35,7 +35,7 @@ def chat_wit_your_code():
 
     # Print the response
     for message_chunk in response:
-        if message_chunk.parts:
+        if message_chunk:
             print(message_chunk.text)
 
 

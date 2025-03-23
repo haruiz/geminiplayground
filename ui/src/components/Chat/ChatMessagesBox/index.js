@@ -23,7 +23,7 @@ export const Pre = ({children}) => <pre className="blog-pre">
 const OutputMessage = ({markdown}) => {
     const {theme} = useTheme();
     return <Markdown
-        className="markdown"
+
         remarkPlugins={[remarkParse, remarkGfm, remarkRehype, rehypeStringify]}
         rehypePlugins={[rehypeRaw]}
         components={{
@@ -112,7 +112,7 @@ function ModelMessage({message: {content, moment, error, loading = false}}) {
 }
 
 export default function ChatMessagesBox({messages = [], onClearChatQueue = null}) {
-
+    
     const emptyMessageQueueContent = <div className="flex flex-col items-center justify-center h-full">
         <Image src="gemini-logo.svg" alt="Gemini Logo" width={200} height={200} priority={true}/>
     </div>

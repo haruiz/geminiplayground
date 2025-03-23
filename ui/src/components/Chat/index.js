@@ -7,44 +7,17 @@ import moment from "moment";
 import ChatSettings from "@/components/ChatSettings";
 import {useEffect, useRef} from "react";
 import useWebSocket, {ReadyState} from "react-use-websocket";
+import {useWebSocketContext} from "@/contexts/WebSocketContext";
 
 function removeBrackets(str) {
     return str.replace(/[\[\](){}<>]/g, '');
 }
 
-const WS_URL = `ws://${process.env.NEXT_PUBLIC_API_BASE_URL}/ws`;
-
-
 export default function Chat() {
 
     const queryClient = useQueryClient();
     const settingFormRef = useRef(null);
-    const {sendJsonMessage, lastJsonMessage, readyState} = useWebSocket(
-        WS_URL,
-        {
-            share: false,
-            shouldReconnect: () => false,
-        },
-    )
-    const {data: selectedModel} = useQuery({
-        queryKey: ["selectedModel"],
-        queryFn: async () => {
-            return queryClient.getQueryData(["selectedModel"]) || null;
-        }
-    });
-
-    useEffect(() => {
-        console.log("Connection state changed")
-        if (readyState === ReadyState.OPEN) {
-            sendJsonMessage({
-                event: "subscribe",
-                data: {
-                    channel: "messages"
-                }
-            })
-        }
-    }, [sendJsonMessage, readyState])
-
+    const {sendJsonMessage, lastJsonMessage, readyState} = useWebSocketContext();
 
     const apiEndpoint = "/tags";
     const {data: tagsData, isLoading, refetch} = useQuery({
@@ -62,6 +35,18 @@ export default function Chat() {
         }
     });
 
+
+    useEffect(() => {
+        console.log("Connection state changed")
+        if (readyState === ReadyState.OPEN) {
+            sendJsonMessage({
+                event: "subscribe",
+                data: {
+                    channel: "messages"
+                }
+            })
+        }
+    }, [sendJsonMessage, readyState])
 
     const sendMessage = useMutation({
         mutationFn: async (messageRequest) => {
@@ -98,17 +83,6 @@ export default function Chat() {
         }
     }, [lastJsonMessage])
 
-    useEffect(() => {
-        if (selectedModel) {
-            sendJsonMessage({
-                event: "set_model",
-                data: {
-                    model: selectedModel
-                }
-            });
-        }
-    }, [selectedModel])
-
 
     const addMessage = useMutation({
         mutationFn: async (message) => {
@@ -134,6 +108,9 @@ export default function Chat() {
     const updateLastMessage = useMutation({
         mutationFn: async (message) => {
             queryClient.setQueryData(["messages"], (prevMessages) => {
+                if (prevMessages.length === 0) {
+                    return [];
+                }
                 const updatedLastMessage = {
                     ...prevMessages[prevMessages.length - 1],
                     ...message
@@ -144,7 +121,11 @@ export default function Chat() {
     });
 
     const getLastMessage = () => {
-        return queryClient.getQueryData(["messages"])[queryClient.getQueryData(["messages"]).length - 1];
+        const messages = queryClient.getQueryData(["messages"]);
+        if (messages.length === 0) {
+            return null;
+        }
+        return messages[messages.length - 1];
     }
 
     function addMessageToChat(role, content, isLoading, rawMessage, error = null) {
@@ -170,22 +151,19 @@ export default function Chat() {
             return;
         }
         try {
-
             const settingsForm = settingFormRef.current;
             const settingsValid = await settingsForm.validateSettings();
             if (!settingsValid) {
                 return;
             }
-            const model = queryClient.getQueryData(["selectedModel"]);
             let modelSettings = settingFormRef.current.getSettings();
             modelSettings = {
+                model: modelSettings.model,
                 temperature: parseFloat(modelSettings.temperature),
                 top_k: parseInt(modelSettings.top_k),
                 top_p: parseFloat(modelSettings.top_p),
             }
-
             const messageRequest = {
-                model,
                 message,
                 settings: modelSettings
             };
@@ -216,11 +194,13 @@ export default function Chat() {
 
     const clearChatQueueHandler = async () => {
         queryClient.setQueryData(["messages"], []);
+        await queryClient.invalidateQueries(["messages"]);
         sendJsonMessage({
             event: "clear_queue",
             data: {}
         });
     }
+
     return (
         <div className="flex flex-col lg:flex-row gap-3">
             <div className="w-full">

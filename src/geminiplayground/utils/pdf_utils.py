@@ -1,44 +1,58 @@
-import typing
 from pathlib import Path
+from typing import Union
 from PIL import Image as PILImage
 from PIL.Image import Image as PILImageType
-import fitz
+import fitz  # PyMuPDF
 
 
 class PDFUtils:
     """
-    Utility class for working with PDF files
+    Utility class for working with PDF files.
     """
 
     @staticmethod
     def create_pdf_thumbnail(
-        pdf_path: typing.Union[str, Path],
-        thumbnail_size: tuple = (128, 128),
-        zoom: float = 0.2,
+            pdf_path: Union[str, Path],
+            thumbnail_size: tuple[int, int] = (128, 128),
+            zoom: float = 0.2,
     ) -> PILImageType:
         """
-        Create a thumbnail for a PDF
-        :param pdf_path: The path to the PDF
-        :param thumbnail_size: The size of the thumbnail
-        :param zoom: The zoom factor for the image
-        :return:
+        Create a thumbnail image from the first page of a PDF.
+
+        Args:
+            pdf_path: Path to the PDF file.
+            thumbnail_size: Size of the thumbnail (width, height).
+            zoom: Zoom factor to control rendered resolution.
+
+        Returns:
+            A PIL.Image thumbnail of the first PDF page.
+
+        Raises:
+            FileNotFoundError: If the file does not exist.
+            ValueError: If the PDF has no pages or cannot be opened.
         """
-        # Convert the first page of the PDF to an image
-        # Open the provided PDF file
-        document = fitz.open(pdf_path)
+        pdf_path = Path(pdf_path)
+        if not pdf_path.exists():
+            raise FileNotFoundError(f"PDF file not found: {pdf_path}")
 
-        # Select the first page
-        page = document[0]
+        try:
+            with fitz.open(pdf_path) as document:
+                if len(document) == 0:
+                    raise ValueError(f"The PDF at {pdf_path} has no pages.")
 
-        # Set the zoom factor for the image
-        mat = fitz.Matrix(zoom, zoom)
+                page = document[0]
+                matrix = fitz.Matrix(zoom, zoom)
+                pix = page.get_pixmap(matrix=matrix)
 
-        # Render page to an image (pixmap)
-        pix = page.get_pixmap(matrix=mat)
+                image = PILImage.frombytes("RGB", (pix.width, pix.height), pix.samples)
+                image.thumbnail(thumbnail_size)
+                return image
 
-        # Save the pixmap as an image file
-        image = PILImage.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        except Exception as e:
+            raise RuntimeError(f"Failed to create PDF thumbnail: {e}") from e
 
-        # Create a thumbnail from the image
-        image.thumbnail(thumbnail_size)
-        return image
+
+if __name__ == '__main__':
+    pdf_path = "./../../../data/vis-language-model.pdf"
+    thumbnail = PDFUtils.create_pdf_thumbnail(pdf_path)
+    thumbnail.show()

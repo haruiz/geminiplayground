@@ -1,15 +1,27 @@
+import logging
+import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
 from .api import api
-from .ui import ui
+from .db.models import *  # noqa: F401, F403
 from .db.session_manager import sessionmanager
-import logging
+from .web import web
 
 logger = logging.getLogger("rich")
 
-from .db.models import *
+
+def mount_apps(app: FastAPI):
+    apps = {
+        "/api": api,
+        "/": web,
+    }
+    for path, sub_app in apps.items():
+        app.mount(path, sub_app)
 
 
 async def initialize_db():
@@ -23,9 +35,9 @@ async def lifespan(app: FastAPI):
     Api life span
     :return:
     """
-
     logger.info("app is starting")
     await initialize_db()
+    mount_apps(app)
     yield
     logger.info("app is shutting down")
 
@@ -38,11 +50,3 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Mount the sub-apps
-apps = {
-    "/api": api,
-    "/": ui,
-}
-for path, sub_app in apps.items():
-    app.mount(path, sub_app)

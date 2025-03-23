@@ -2,7 +2,7 @@
 
 ![Gemini Logo](https://raw.githubusercontent.com/haruiz/geminiplayground/main/images/logo.png)
 
-Gemini Playground provides a Python interface and a user interface to interact with different Gemini model variants.
+Gemini Playground provides a Python interface and a user interface to interact with the Gemini models family.
 With Gemini Playground, you can:
 
 * **Engage in conversation with your data either through a simple code API or using the API:** Upload images and videos

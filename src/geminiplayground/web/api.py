@@ -228,62 +228,64 @@ async def clone_repo_task(repo_name: str, repo_path: str, repo_branch: str):
     """
     Clone a repository
     """
-    try:
-        async for session in get_db_session():
-            query = select(MultimodalPartDBModel).filter(
-                MultimodalPartDBModel.name == repo_name
+    async for session in get_db_session():
+        query = select(MultimodalPartDBModel).filter(
+            MultimodalPartDBModel.name == repo_name
+        )
+        result = await session.execute(query)
+        part = result.scalars().first()
+        try:
+            await run_in_threadpool(GitRepo.from_url, repo_path, branch=repo_branch)
+            logger.info(
+                f"Cloned repository {repo_name} from {repo_path} branch {repo_branch}"
             )
-            result = await session.execute(query)
-            part = result.scalars().first()
-            try:
-                await run_in_threadpool(
-                    lambda: GitRepo.from_url(repo_path, branch=repo_branch)
-                )
-                logger.info(
-                    f"Cloned repository {repo_name} from {repo_path} branch {repo_branch}"
-                )
-                part.status = EntryStatus.READY
-            except GitRepoBranchNotFoundException as e:
-                part.status = EntryStatus.ERROR
-                part.status_message = str(e)
-                logger.error(
-                    f"Error cloning repository {repo_name} from {repo_path} branch {repo_branch}: {e}"
-                )
-            finally:
-                await session.commit()
-    except Exception as e:
-        logger.error(e)
+            part.status = EntryStatus.READY
+        except GitRepoBranchNotFoundException as e:
+            part.status = EntryStatus.ERROR
+            part.status_message = str(e)
+            logger.error(
+                f"Error cloning repository {repo_name} from {repo_path} branch {repo_branch}: {e}"
+            )
+        except Exception as e:
+            part.status = EntryStatus.ERROR
+            part.status_message = str(e)
+        finally:
+            await session.commit()
 
 
 async def copy_repo_task(repo_name: str, repo_path: str, repo_target_folder: str):
     """
     Clone a repository
     """
-    try:
-        async for session in get_db_session():
-            query = select(MultimodalPartDBModel).filter(
-                MultimodalPartDBModel.name == repo_name
+    async for session in get_db_session():
+        query = select(MultimodalPartDBModel).filter(
+            MultimodalPartDBModel.name == repo_name
+        )
+        result = await session.execute(query)
+        part = result.scalars().first()
+        try:
+            if Path(repo_target_folder).exists():
+                shutil.rmtree(repo_target_folder)
+
+            await run_in_threadpool(shutil.copytree, repo_path, repo_target_folder)
+            logger.info(
+                f"Copied repository {repo_name} from {repo_path} to {repo_target_folder}"
             )
-            result = await session.execute(query)
-            part = result.scalars().first()
-            try:
-                await run_in_threadpool(
-                    lambda: shutil.copytree(repo_path, repo_target_folder)
-                )
-                logger.info(
-                    f"Copied repository {repo_name} from {repo_path} to {repo_target_folder}"
-                )
-                part.status = EntryStatus.READY
-            except GitRepoBranchNotFoundException as e:
-                part.status = EntryStatus.ERROR
-                part.status_message = str(e)
-                logger.error(
-                    f"Error copying repository {repo_name} from {repo_path} to {repo_target_folder}: {e}"
-                )
-            finally:
-                await session.commit()
-    except Exception as e:
-        logger.error(e)
+            part.status = EntryStatus.READY
+        except GitRepoBranchNotFoundException as e:
+            part.status = EntryStatus.ERROR
+            part.status_message = str(e)
+            logger.error(
+                f"Error copying repository {repo_name} from {repo_path} to {repo_target_folder}: {e}"
+            )
+        except Exception as e:
+            part.status = EntryStatus.ERROR
+            part.status_message = str(e)
+            logger.error(
+                f"Error copying repository {repo_name} from {repo_path} to {repo_target_folder}: {e}"
+            )
+        finally:
+            await session.commit()
 
 
 @api.post("/uploadRepo")
@@ -298,7 +300,7 @@ async def upload_repo_handler(
     body_data = await request.json()
     repo_path = body_data.get("repoPath")
     repo_branch = body_data.get("repoBranch")
-
+    new_part = None
     try:
         if validators.url(repo_path):
             available_branches = GitUtils.get_github_repo_available_branches(repo_path)
@@ -306,7 +308,7 @@ async def upload_repo_handler(
                 f"Branch {repo_branch} does not exist in {repo_path}, "
                 f"available branches are: {available_branches}"
             )
-        elif Path(repo_path).is_dir() and Path(repo_path).exists():
+        elif Path(repo_path).is_dir():
             assert GitUtils.folder_contains_git_repo(
                 repo_path
             ), f"Invalid repository path: {repo_path}"
@@ -317,8 +319,7 @@ async def upload_repo_handler(
         new_part = MultimodalPartDBModel(name=repo_name, content_type="repo")
         new_part.thumbnail = "thumbnail_github.png"
         db_session.add(new_part)
-        await db_session.commit()
-
+        
         if validators.url(repo_path):
             background_tasks.add_task(
                 clone_repo_task, repo_name, repo_path, repo_branch
@@ -329,7 +330,13 @@ async def upload_repo_handler(
                 copy_repo_task, repo_name, repo_path, str(repo_target_folder)
             )
     except Exception as e:
+        if new_part:
+            new_part.status = EntryStatus.ERROR
+            new_part.status_message = str(e)
+        logger.error(e)
         raise HTTPException(status_code=500, detail=repr(e))
+    finally:
+        await db_session.commit()
     return JSONResponse(content={"content": "Repository created"})
 
 

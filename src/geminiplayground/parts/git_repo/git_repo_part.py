@@ -1,6 +1,5 @@
-import logging
-import typing
 import codecs
+import logging
 from pathlib import Path
 from urllib.parse import urlparse
 
